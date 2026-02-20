@@ -1,4 +1,4 @@
-website design:https://talent-blueprints-ai.lovable.app
+website design:
 https://lovable.dev/projects/096e8e1a-690f-4f69-b617-41791b00f333?magic_link=mc_866cc7df-1b60-4ac3-af61-738604f060e3
 
 
