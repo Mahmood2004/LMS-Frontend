@@ -1,0 +1,70 @@
+import { Brain, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { sidebarItems } from "./data/mockData";
+
+interface InstructorLayoutProps {
+  activeSection: string;
+  onNavigate: (section: string) => void;
+  children: React.ReactNode;
+}
+
+const InstructorLayout = ({
+  activeSection,
+  onNavigate,
+  children,
+}: InstructorLayoutProps) => {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 bottom-0 w-64 border-r border-border bg-card p-6 hidden lg:flex flex-col z-40">
+        <Link to="/" className="flex items-center gap-2 mb-10">
+          <div className="w-9 h-9 rounded-lg bg-hero-gradient flex items-center justify-center">
+            <Brain className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-display font-bold text-foreground">
+            EduRecruit<span className="text-primary">AI</span>
+          </span>
+        </Link>
+        <div className="mb-4 px-3 py-2 rounded-lg bg-accent/50 border border-border">
+          <p className="text-xs font-medium text-accent-foreground">
+            Instructor Portal
+          </p>
+          <p className="text-xs text-muted-foreground">Dr. Sarah Chen</p>
+        </div>
+        <nav className="flex-1 space-y-1">
+          {sidebarItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                activeSection === item.id
+                  ? "bg-accent text-accent-foreground font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <Link to="/login">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
+        </Link>
+      </aside>
+
+      {/* Main content */}
+      <main className="lg:ml-64 p-6 lg:p-10 max-w-5xl">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default InstructorLayout;
