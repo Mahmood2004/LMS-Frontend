@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, LogOut, Menu, X } from "lucide-react";
+import { Sparkles, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { navItems, notificationsData } from "./data/mockData";
@@ -11,7 +11,11 @@ interface StudentLayoutProps {
   children: React.ReactNode;
 }
 
-const StudentLayout = ({ activeSection, onNavigate, children }: StudentLayoutProps) => {
+const StudentLayout = ({
+  activeSection,
+  onNavigate,
+  children,
+}: StudentLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = (section: string) => {
@@ -27,7 +31,7 @@ const StudentLayout = ({ activeSection, onNavigate, children }: StudentLayoutPro
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <div className="w-8 h-8 rounded-lg bg-hero-gradient flex items-center justify-center">
-              <Brain className="w-4 h-4 text-primary-foreground" />
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-foreground text-sm sm:text-base">
               EduRecruit<span className="text-primary">AI</span>
@@ -127,7 +131,7 @@ const StudentLayout = ({ activeSection, onNavigate, children }: StudentLayoutPro
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <div className="w-8 h-8 rounded-lg bg-hero-gradient flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-primary-foreground" />
+                    <Sparkles className="w-4 h-4 text-primary-foreground" />
                   </div>
                   <span className="font-display font-bold text-foreground">
                     EduRecruit<span className="text-primary">AI</span>
@@ -142,24 +146,26 @@ const StudentLayout = ({ activeSection, onNavigate, children }: StudentLayoutPro
               </div>
               {/* Nav items */}
               <div className="p-4 space-y-1">
-                {navItems.filter(item => item.id !== "assistant").map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => navigate(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
-                      activeSection === item.id
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5 shrink-0" />
-                    {item.label}
-                    {item.id === "notifications" &&
-                      notificationsData.some((n) => !n.read) && (
-                        <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-                      )}
-                  </button>
-                ))}
+                {navItems
+                  .filter((item) => item.id !== "assistant")
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => navigate(item.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
+                        activeSection === item.id
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <item.icon className="w-5 h-5 shrink-0" />
+                      {item.label}
+                      {item.id === "notifications" &&
+                        notificationsData.some((n) => !n.read) && (
+                          <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
+                        )}
+                    </button>
+                  ))}
                 <div className="pt-2 border-t border-border mt-2">
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                     <button className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all">
@@ -186,18 +192,24 @@ const StudentLayout = ({ activeSection, onNavigate, children }: StudentLayoutPro
             onClick={() => navigate("assistant")}
             className="fixed bottom-6 right-6 z-40 bg-hero-gradient text-primary-foreground px-5 py-3 rounded-full shadow-elevated flex items-center gap-2 font-medium hover:shadow-2xl transition-shadow"
           >
-            <Brain className="w-5 h-5" />
+            <Sparkles className="w-5 h-5" />
             <span>AI Assistant</span>
           </motion.button>
         )}
       </AnimatePresence>
 
       {/* ── Main content ── */}
-      <main className="pt-16 min-h-screen">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </div>
-      </main>
+      {activeSection === "assistant" ? (
+        <main className="pt-16" style={{ height: "100vh" }}>
+          <div className="h-full">{children}</div>
+        </main>
+      ) : (
+        <main className="pt-16 min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {children}
+          </div>
+        </main>
+      )}
     </div>
   );
 };
