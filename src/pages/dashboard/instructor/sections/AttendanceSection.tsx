@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import Initials from "../../shared/components/Initials";
 import { coursesData, rosterData } from "../data/mockData";
 import type { AttendanceStatus } from "../types";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 interface AttendanceSectionProps {
   selectedCourseId: number | null;
@@ -27,6 +29,107 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
     present: "bg-emerald-100 text-emerald-700 border-emerald-300",
     absent: "bg-destructive/10 text-destructive border-destructive/30",
     late: "bg-amber-100 text-amber-700 border-amber-300",
+  };
+
+  const exportToExcel = async () => {
+    const courseName =
+      coursesData.find((c) => c.id === selectedCourse)?.name || "Course";
+
+    const today = new Date().toLocaleDateString("en-US");
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Attendance");
+
+    // 🔷 Title Section
+    worksheet.addRow([`Attendance Report`]);
+    worksheet.addRow([]);
+    worksheet.addRow(["Course:", courseName]);
+    worksheet.addRow(["Date:", today]);
+    worksheet.addRow([]);
+
+    // 🔷 Header Row
+    const headerRow = worksheet.addRow([
+      "Student Name",
+      "Student Email",
+      "Status",
+    ]);
+
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: "center" };
+
+    // Column widths
+    worksheet.columns = [{ width: 25 }, { width: 30 }, { width: 15 }];
+
+    // 🔷 Student Rows
+    rosterData.forEach((student) => {
+      const status = attendance[student.id];
+
+      const row = worksheet.addRow([
+        student.name,
+        student.email,
+        status.toUpperCase(),
+      ]);
+
+      // 🎨 Status Color Styling
+      const statusCell = row.getCell(3);
+
+      if (status === "present") {
+        statusCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "C6EFCE" }, // Light green
+        };
+        statusCell.font = { color: { argb: "006100" }, bold: true };
+      }
+
+      if (status === "absent") {
+        statusCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFC7CE" }, // Light red
+        };
+        statusCell.font = { color: { argb: "9C0006" }, bold: true };
+      }
+
+      if (status === "late") {
+        statusCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFEB9C" }, // Light yellow
+        };
+        statusCell.font = { color: { argb: "9C6500" }, bold: true };
+      }
+
+      statusCell.alignment = { horizontal: "center" };
+    });
+
+    // 🔷 Summary Section
+    worksheet.addRow([]);
+    worksheet.addRow(["Summary"]);
+    worksheet.getRow(worksheet.lastRow!.number).font = { bold: true };
+
+    const presentCount = Object.values(attendance).filter(
+      (s) => s === "present",
+    ).length;
+    const absentCount = Object.values(attendance).filter(
+      (s) => s === "absent",
+    ).length;
+    const lateCount = Object.values(attendance).filter(
+      (s) => s === "late",
+    ).length;
+
+    worksheet.addRow(["Present:", presentCount]);
+    worksheet.addRow(["Absent:", absentCount]);
+    worksheet.addRow(["Late:", lateCount]);
+    worksheet.addRow(["Total Students:", rosterData.length]);
+
+    // 🔷 Generate File
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `Attendance_${courseName.replace(/\s/g, "_")}_${today}.xlsx`);
   };
 
   useEffect(() => {
@@ -113,12 +216,14 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
       <div className="mt-4 flex justify-end">
         <Button
           variant="hero"
-          onClick={() =>
+          onClick={() => {
+            exportToExcel();
+
             toast({
               title: "Attendance saved!",
-              description: `Recorded for ${selectedCourse}.`,
-            })
-          }
+              description: `Recorded for ${coursesData.find((c) => c.id === selectedCourse)?.name}.`,
+            });
+          }}
         >
           <Check className="w-4 h-4 mr-2" />
           Save Attendance

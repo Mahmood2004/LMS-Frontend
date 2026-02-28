@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Upload } from "lucide-react";
+import {
+  FileText,
+  Upload,
+  Linkedin,
+  Github,
+  Globe,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,12 +22,74 @@ const ProfileSection = () => {
   );
   const [phone, setPhone] = useState("+1 (555) 000-1234");
   const [cvFile, setCvFile] = useState<string | null>(null);
+  const [linkedin, setLinkedin] = useState("");
+  const [github, setGithub] = useState("");
+  const [portfolio, setPortfolio] = useState("");
   const [dragging, setDragging] = useState(false);
+
+  const validateUrl = (url: string, requiredDomain?: string) => {
+    if (!url) return true;
+
+    try {
+      const parsed = new URL(url);
+
+      if (requiredDomain && !parsed.hostname.includes(requiredDomain)) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const getValidationState = (value: string, requiredDomain?: string) => {
+    if (!value) return "empty";
+
+    try {
+      const parsed = new URL(value);
+
+      if (requiredDomain && !parsed.hostname.includes(requiredDomain)) {
+        return "invalid";
+      }
+
+      return "valid";
+    } catch {
+      return "invalid";
+    }
+  };
 
   const handleSave = () => {
     toast({
       title: "Profile saved!",
       description: "Your changes have been updated.",
+      duration: 3000,
+    });
+  };
+
+  const handleSaveLinks = () => {
+    const invalidLinks: string[] = [];
+
+    if (!validateUrl(linkedin, "linkedin.com")) invalidLinks.push("LinkedIn");
+    if (!validateUrl(github, "github.com")) invalidLinks.push("GitHub");
+    if (!validateUrl(portfolio)) invalidLinks.push("Portfolio");
+
+    if (invalidLinks.length > 0) {
+      toast({
+        title: "Cannot save profile",
+        description: `Please fix the following links: ${invalidLinks.join(
+          ", ",
+        )}.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    toast({
+      title: "Profile saved!",
+      description: "Your changes have been updated.",
+      duration: 3000,
     });
   };
 
@@ -78,7 +148,10 @@ const ProfileSection = () => {
             <label className="text-sm font-medium text-foreground">Phone</label>
             <Input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const numbersOnly = e.target.value.replace(/\D/g, "");
+                setPhone(numbersOnly);
+              }}
               className="mt-1"
             />
           </div>
@@ -95,14 +168,18 @@ const ProfileSection = () => {
           </Button>
         </div>
 
-        {/* CV section */}
+        {/* Links & CV section */}
         <div className="lg:col-span-2 p-5 sm:p-7 rounded-2xl bg-card border border-border shadow-card space-y-4">
-          <h2 className="text-lg font-semibold font-display text-foreground">
-            Your CV
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Upload your CV to share with recruiters.
-          </p>
+          <div>
+            <h2 className="text-lg font-semibold font-display text-foreground">
+              Links & CV
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Share your professional links with recruiters.
+            </p>
+          </div>
+
+          {/* CV Upload */}
           {cvFile ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -124,7 +201,7 @@ const ProfileSection = () => {
                 onClick={() => setCvFile(null)}
                 className="shrink-0 text-muted-foreground"
               >
-                Replace
+                Remove
               </Button>
             </motion.div>
           ) : (
@@ -160,6 +237,89 @@ const ProfileSection = () => {
               </p>
             </div>
           )}
+
+          {/* LinkedIn */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              LinkedIn Profile
+            </label>
+
+            <div className="relative">
+              <Linkedin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+
+              <Input
+                className="pl-9 pr-9"
+                placeholder="https://linkedin.com/in/yourname"
+                value={linkedin}
+                onChange={(e) => setLinkedin(e.target.value)}
+              />
+
+              {getValidationState(linkedin, "linkedin.com") === "valid" && (
+                <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
+              )}
+
+              {getValidationState(linkedin, "linkedin.com") === "invalid" && (
+                <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
+              )}
+            </div>
+          </div>
+
+          {/* GitHub */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              GitHub Profile
+            </label>
+
+            <div className="relative">
+              <Github className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+
+              <Input
+                className="pl-9 pr-9"
+                placeholder="https://github.com/yourusername"
+                value={github}
+                onChange={(e) => setGithub(e.target.value)}
+              />
+
+              {getValidationState(github, "github.com") === "valid" && (
+                <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
+              )}
+
+              {getValidationState(github, "github.com") === "invalid" && (
+                <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
+              )}
+            </div>
+          </div>
+
+          {/* Portfolio */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Portfolio Website
+            </label>
+
+            <div className="relative">
+              <Globe className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+
+              <Input
+                className="pl-9 pr-9"
+                placeholder="https://yourportfolio.com"
+                value={portfolio}
+                onChange={(e) => setPortfolio(e.target.value)}
+              />
+
+              {getValidationState(portfolio) === "valid" && (
+                <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
+              )}
+
+              {getValidationState(portfolio) === "invalid" && (
+                <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end pt-4 ">
+            <Button variant="hero" onClick={handleSaveLinks}>
+              Save Changes
+            </Button>
+          </div>
         </div>
       </div>
     </>
