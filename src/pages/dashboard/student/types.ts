@@ -13,14 +13,16 @@ export type CourseModule = {
   title: string;
   type: string;
   desc: string;
+  url: string;
+  createdAt: number;
 };
 
 export type Course = {
   id: number;
   name: string;
   instructor: string;
-  progress: number;
   modules: CourseModule[];
+  createdAt: number;
 };
 
 export type Assignment = {

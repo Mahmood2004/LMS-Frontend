@@ -68,22 +68,7 @@ const DashboardSection = ({ onNavigate }: DashboardSectionProps) => (
               <div className="text-xs text-muted-foreground mt-0.5">
                 {course.instructor}
               </div>
-              <div className="mt-2 w-full h-1.5 rounded-full bg-secondary overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${course.progress}%` }}
-                  transition={{
-                    delay: 0.4 + i * 0.1,
-                    duration: 0.6,
-                    ease: "easeOut",
-                  }}
-                  className="h-full rounded-full bg-hero-gradient"
-                />
-              </div>
             </div>
-            <span className="text-sm font-semibold text-primary shrink-0">
-              {course.progress}%
-            </span>
           </motion.div>
         ))}
       </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Initials from "../../shared/components/Initials";
 import StarDisplay from "../../shared/components/StarDisplay";
+// import RatingBadge from "../../shared/components/RatingBadge";
 import { coursesData, feedbackHistoryData } from "../data/mockData";
 
 const FeedbackSection = () => {

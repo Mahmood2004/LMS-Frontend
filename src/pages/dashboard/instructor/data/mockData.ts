@@ -23,6 +23,23 @@ export const coursesData: InstructorCourse[] = [
     pendingGrades: 8,
     description:
       "Deep-dive into advanced React patterns, hooks, and performance.",
+    content: [
+      {
+        id: 101,
+        title: "Intro Slides",
+        type: "pdf",
+        url: "/mock-files/intro.pdf",
+        createdAt: 1687000000000,
+      },
+      {
+        id: 102,
+        title: "Lesson 1 Video",
+        type: "video",
+        url: "/mock-files/lesson1.mp4",
+        createdAt: 1687001000000,
+      },
+    ],
+    createdAt: 1687001000000,
   },
   {
     id: 2,
@@ -30,6 +47,23 @@ export const coursesData: InstructorCourse[] = [
     students: 28,
     pendingGrades: 3,
     description: "Scalable system design principles for modern applications.",
+    content: [
+      {
+        id: 101,
+        title: "Intro Slides",
+        type: "pdf",
+        url: "/mock-files/intro.pdf",
+        createdAt: 1687005000000,
+      },
+      {
+        id: 102,
+        title: "Lesson 1 Video",
+        type: "video",
+        url: "/mock-files/lesson1.mp4",
+        createdAt: 1687003000000,
+      },
+    ],
+    createdAt: 1687003000000,
   },
   {
     id: 3,
@@ -37,6 +71,8 @@ export const coursesData: InstructorCourse[] = [
     students: 45,
     pendingGrades: 12,
     description: "Core cloud concepts, AWS, and serverless architectures.",
+    content: [],
+    createdAt: 1687001000000,
   },
 ];
 

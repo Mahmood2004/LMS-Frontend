@@ -64,9 +64,7 @@ const DeleteChatModal = ({
             {/* Body */}
             <p className="mt-2 text-sm text-muted-foreground text-center leading-relaxed">
               This will delete &ldquo;
-              <span className="text-muted-foreground font-medium">
-                {chatTitle}
-              </span>
+              <span className="text-muted-foreground font-medium">{chatTitle}</span>
               &rdquo; permanently!
             </p>
 

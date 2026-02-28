@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardCheck, Clock, Send, Upload } from "lucide-react";
+import { ClipboardCheck, Clock, Paperclip, Send, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -14,8 +14,11 @@ const AssignmentsSection = () => {
   const [activeTab, setActiveTab] = useState<"assignment" | "project">(
     "assignment",
   );
+  const [attachedFiles, setAttachedFiles] = useState<
+    Record<number, File | null>
+  >({});
+  const [submitTexts, setSubmitTexts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState<number | null>(null);
-  const [submitText, setSubmitText] = useState("");
   const [dragging, setDragging] = useState(false);
   const [submittedIds, setSubmittedIds] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -23,12 +26,29 @@ const AssignmentsSection = () => {
   const items = assignmentsData.filter((a) => a.type === activeTab);
 
   const handleSubmit = (id: number) => {
+    const file = attachedFiles[id];
+    const description = submitTexts[id] ?? "";
+
+    if (!file) {
+      toast({
+        title: "No file attached",
+        description: "Please attach a file first.",
+        variant: "destructive",
+        duration: 2000,
+      });
+      return;
+    }
+
     setSubmittedIds((prev) => [...prev, id]);
     setSubmitting(null);
-    setSubmitText("");
+
+    setAttachedFiles((prev) => ({ ...prev, [id]: null }));
+    setSubmitTexts((prev) => ({ ...prev, [id]: "" }));
+
     toast({
       title: "Submitted!",
-      description: "Your work has been submitted successfully.",
+      description: `Your file "${file.name}" has been submitted successfully.`,
+      duration: 2000,
     });
   };
 
@@ -66,7 +86,12 @@ const AssignmentsSection = () => {
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) toast({ title: "File selected", description: file.name });
+          if (file)
+            toast({
+              title: "File selected",
+              description: file.name,
+              duration: 2000,
+            });
         }}
       />
 
@@ -137,39 +162,106 @@ const AssignmentsSection = () => {
                           setDragging(false);
                           const file = e.dataTransfer.files[0];
                           if (file)
-                            toast({
-                              title: "File attached",
-                              description: file.name,
-                            });
+                            setAttachedFiles((prev) => ({
+                              ...prev,
+                              [a.id]: file,
+                            }));
+                          toast({
+                            title: "File attached",
+                            description: file.name,
+                            duration: 2000,
+                          });
                         }}
                         onClick={() => fileInputRef.current?.click()}
                         className={`border-2 border-dashed rounded-xl p-6 sm:p-8 text-center transition-colors cursor-pointer ${
                           dragging
                             ? "border-primary bg-accent/50"
-                            : "border-border hover:border-primary/50"
+                            : attachedFiles[a.id]
+                              ? "border-emerald-400 bg-emerald-50"
+                              : "border-border hover:border-primary/50"
                         }`}
                       >
-                        <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm font-medium text-foreground">
-                          Drop your file here or{" "}
-                          <span className="text-primary">browse</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          PDF, DOCX, ZIP up to 20MB
-                        </p>
+                        <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-4" />
+                        {attachedFiles[a.id] ? (
+                          <>
+                            <p className="text-sm font-medium text-foreground">
+                              <span className="flex items-center gap-2 justify-center">
+                                <Paperclip className="w-6 h-6 text-muted-foreground" />
+                                {attachedFiles[a.id].name}
+                              </span>
+                            </p>
+                            <p
+                              className="text-xs text-muted-foreground underline cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAttachedFiles((prev) => ({
+                                  ...prev,
+                                  [a.id]: null,
+                                }));
+                              }}
+                            >
+                              Remove file
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-foreground">
+                              Drop your file here or{" "}
+                              <span className="text-primary">browse</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              PDF, DOCX, ZIP up to 20MB
+                            </p>
+                          </>
+                        )}
                       </div>
+                      {/* Hidden file input */}
+                      <input
+                        type="file"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setAttachedFiles((prev) => ({
+                              ...prev,
+                              [a.id]: file,
+                            }));
+                            toast({
+                              title: "File attached",
+                              description: file.name,
+                              duration: 2000,
+                            });
+                          }
+                        }}
+                      />
                       {/* Text area */}
                       <Textarea
                         placeholder="Add a note or description for your submission..."
-                        value={submitText}
-                        onChange={(e) => setSubmitText(e.target.value)}
+                        value={submitTexts[a.id] ?? ""}
+                        onChange={(e) =>
+                          setSubmitTexts((prev) => ({
+                            ...prev,
+                            [a.id]: e.target.value,
+                          }))
+                        }
                         className="min-h-[80px]"
                       />
                       <div className="flex gap-2 justify-end">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSubmitting(null)}
+                          onClick={() => {
+                            setSubmitting(null);
+                            setAttachedFiles((prev) => ({
+                              ...prev,
+                              [a.id]: null,
+                            }));
+                            setSubmitTexts((prev) => ({
+                              ...prev,
+                              [a.id]: "",
+                            }));
+                          }}
                         >
                           Cancel
                         </Button>

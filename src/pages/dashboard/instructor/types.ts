@@ -8,6 +8,14 @@ export type InstructorCourse = {
   students: number;
   pendingGrades: number;
   description: string;
+  content: Array<{
+    id: number;
+    title: string;
+    type: "pdf" | "video";
+    url: string;
+    createdAt: number;
+  }>;
+  createdAt: number;
 };
 
 export type RosterStudent = {

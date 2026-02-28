@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,15 @@ import Initials from "../../shared/components/Initials";
 import StarRating from "../../shared/components/StarRating";
 import { coursesData, submissionsData } from "../data/mockData";
 
-const AssignmentsSection = () => {
+interface AssignmentsSectionProps {
+  preselectedCourseId?: number;
+  preselectedType?: "assignment" | "project";
+}
+
+const AssignmentsSection = ({
+  preselectedCourseId,
+  preselectedType,
+}: AssignmentsSectionProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"create" | "submissions">(
     "create",
@@ -20,39 +28,83 @@ const AssignmentsSection = () => {
   >({});
   const [form, setForm] = useState({
     title: "",
-    type: "assignment",
-    course: coursesData[0].name,
+    type: preselectedType ?? "assignment",
+    course:
+      coursesData.find((c) => c.id === preselectedCourseId)?.name ??
+      coursesData[0].name,
     dueDate: "",
     description: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (preselectedCourseId) {
+      setForm((prev) => ({
+        ...prev,
+        course:
+          coursesData.find((c) => c.id === preselectedCourseId)?.name ??
+          prev.course,
+      }));
+    }
+    if (preselectedType) {
+      setForm((prev) => ({ ...prev, type: preselectedType }));
+    }
+  }, [preselectedCourseId, preselectedType]);
+
   const handlePost = () => {
-    if (!form.title) return;
+    if (!form.title || !form.dueDate || !form.description) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     setTimeout(() => {
       setSubmitting(false);
       setForm({
         title: "",
-        type: "assignment",
-        course: coursesData[0].name,
+        type: preselectedType ?? "assignment",
+        course:
+          coursesData.find((c) => c.id === preselectedCourseId)?.name ??
+          coursesData[0].name,
         dueDate: "",
         description: "",
       });
       toast({
-        title: "Posted!",
+        title: `${form.type === "assignment" ? "Assignment" : "Project"} Posted!`,
         description: `"${form.title}" has been assigned to students.`,
+        duration: 3000,
       });
     }, 600);
   };
 
   const handleGrade = (id: number) => {
     const g = grades[id];
-    if (!g?.rating) return;
+
+    if (!g?.rating) {
+      toast({
+        title: "Rating required",
+        description: "Please select a performance rating before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!g.feedback || g.feedback.trim() === "") {
+      toast({
+        title: "Feedback required",
+        description: "Please provide written feedback before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
     setGradingId(null);
     toast({
       title: "Graded!",
       description: "Your feedback has been submitted.",
+      duration: 3000,
     });
   };
 
@@ -114,7 +166,12 @@ const AssignmentsSection = () => {
               </label>
               <select
                 value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    type: e.target.value as "assignment" | "project",
+                  })
+                }
                 className="mt-1 w-full text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="assignment">Assignment</option>
@@ -264,7 +321,14 @@ const AssignmentsSection = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setGradingId(null)}
+                          onClick={() => {
+                            setGrades((prev) => {
+                              const updated = { ...prev };
+                              delete updated[sub.id];
+                              return updated;
+                            });
+                            setGradingId(null);
+                          }}
                         >
                           Cancel
                         </Button>
