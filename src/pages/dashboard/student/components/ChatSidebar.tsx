@@ -141,18 +141,21 @@ const ChatSidebar = ({
 
                 {/* Delete button — only when expanded */}
                 {sidebarOpen && (
-                  <motion.button
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                       onRequestDelete(chat.id);
                     }}
-                    whileHover={{ backgroundColor: "hsla(0, 100%, 74%, 1.00)" }}
-                    transition={{ duration: 0 }}
                     className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-red-500/20 text-red-500 cursor-pointer"
                     title="Delete chat"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && onRequestDelete(chat.id)
+                    }
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </motion.button>
+                  </div>
                 )}
               </motion.button>
             ))}

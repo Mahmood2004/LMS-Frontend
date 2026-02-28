@@ -7,9 +7,11 @@ import AssignmentsSection from "./sections/AssignmentsSection";
 import AssistantSection from "./sections/AssistantSection";
 import NotificationsSection from "./sections/NotificationsSection";
 import ProfileSection from "./sections/ProfileSection";
+import { notificationsData as initialNotifications } from "./data/mockData";
 
 const StudentDashboard = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [notifications, setNotifications] = useState(initialNotifications);
 
   const navigate = (section: string) => {
     setActiveSection(section);
@@ -26,7 +28,12 @@ const StudentDashboard = () => {
       case "assistant":
         return <AssistantSection />;
       case "notifications":
-        return <NotificationsSection />;
+        return (
+          <NotificationsSection
+            notifications={notifications}
+            setNotifications={setNotifications}
+          />
+        );
       case "profile":
         return <ProfileSection />;
       default:
@@ -35,7 +42,12 @@ const StudentDashboard = () => {
   };
 
   return (
-    <StudentLayout activeSection={activeSection} onNavigate={navigate}>
+    <StudentLayout
+      activeSection={activeSection}
+      onNavigate={navigate}
+      notifications={notifications}
+      setNotifications={setNotifications}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSection}

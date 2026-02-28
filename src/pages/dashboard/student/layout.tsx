@@ -3,18 +3,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { navItems, notificationsData } from "./data/mockData";
+import { navItems } from "./data/mockData";
+import { notificationsData as initialNotifications } from "../student/data/mockData";
 
 interface StudentLayoutProps {
   activeSection: string;
   onNavigate: (section: string) => void;
   children: React.ReactNode;
+  notifications: typeof initialNotifications;
+  setNotifications: React.Dispatch<
+    React.SetStateAction<typeof initialNotifications>
+  >;
 }
 
 const StudentLayout = ({
   activeSection,
   onNavigate,
   children,
+  notifications,
+  setNotifications,
 }: StudentLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -72,7 +79,7 @@ const StudentLayout = ({
                 >
                   <item.icon className="w-5 h-5 shrink-0" />
                   {item.id === "notifications" &&
-                    notificationsData.some((n) => !n.read) && (
+                    notifications.some((n) => !n.read) && (
                       <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
                     )}
                 </button>
@@ -161,7 +168,7 @@ const StudentLayout = ({
                       <item.icon className="w-5 h-5 shrink-0" />
                       {item.label}
                       {item.id === "notifications" &&
-                        notificationsData.some((n) => !n.read) && (
+                        notifications.some((n) => !n.read) && (
                           <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
                         )}
                     </button>

@@ -4,14 +4,24 @@ import { ClipboardCheck, Award, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notificationsData as initialNotifications } from "../data/mockData";
 
-const NotificationsSection = () => {
+interface NotificationsSectionProps {
+  notifications: typeof initialNotifications;
+  setNotifications: React.Dispatch<
+    React.SetStateAction<typeof initialNotifications>
+  >;
+}
+
+const NotificationsSection = ({
+  notifications,
+  setNotifications,
+}: NotificationsSectionProps) => {
   const [filter, setFilter] = useState<
     "all" | "assignment" | "grade" | "announcement"
   >("all");
-  const [notifications, setNotifications] = useState(initialNotifications);
 
   const markAllRead = () =>
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
   const filtered =
     filter === "all"
       ? notifications
