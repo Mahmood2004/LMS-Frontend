@@ -17,12 +17,12 @@ const CTASection = () => {
         className="relative max-w-3xl mx-auto text-center"
       >
         <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">
-          Ready to transform your{" "}
-          <span className="text-gradient">talent pipeline?</span>
+          Ready to elevate your{" "}
+          <span className="text-gradient">learning experience?</span>
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
-          Join organizations that trust AI-verified skills over self-reported
-          résumés. Pre-provisioned accounts ensure security from day one.
+          Join institutions and learners embracing AI-assisted education,
+          milestone based progress, and meaningful feedback.
         </p>
         <div className="mt-8">
           <Button

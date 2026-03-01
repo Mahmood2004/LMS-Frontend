@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 import {
   GraduationCap,
-  Users,
   Brain,
-  Search,
+  Users,
   BookOpen,
   Bell,
+  ClipboardCheck,
 } from "lucide-react";
 
 const features = [
@@ -13,37 +13,37 @@ const features = [
     icon: GraduationCap,
     title: "Smart Course Management",
     description:
-      "Track attendance, performance, assignments and projects with deep instructor feedback loops.",
-  },
-  {
-    icon: Search,
-    title: "AI Talent Discovery",
-    description:
-      "Recruiters find candidates using natural language — powered by hybrid vector search and re-ranking.",
+      "Manage attendance, assignments, milestones, and course structure in a streamlined instructor-focused interface.",
   },
   {
     icon: Brain,
     title: "Intelligent Course Assistant",
     description:
-      "Context-aware RAG chatbot bridging courseware with live documentation from official sources.",
+      "Embedded AI assistant with persistent chat history and smart summaries to support students directly inside their courses.",
   },
   {
-    icon: Users,
-    title: "Automated Onboarding",
+    icon: ClipboardCheck,
+    title: "Milestone-Based Progress",
     description:
-      "Bulk import users with CV extraction via LLM — skills, education, and experience parsed instantly.",
+      "Move beyond letter grades with structured progression tracking and qualitative performance indicators.",
   },
   {
     icon: BookOpen,
     title: "Deep Feedback System",
     description:
-      "Instructor ratings and text feedback are indexed in real-time for recruitment AI to leverage.",
+      "Comprehensive instructor feedback highlighting strengths, growth areas, and mastery levels in real time.",
+  },
+  {
+    icon: Users,
+    title: "Structured Onboarding",
+    description:
+      "Bulk import students and instructors with clean metadata handling and streamlined account provisioning.",
   },
   {
     icon: Bell,
     title: "Targeted Notifications",
     description:
-      "Course-specific announcements, assignment alerts, and grade notifications keep everyone in sync.",
+      "Course updates, assignment alerts, and important announcements delivered instantly.",
   },
 ];
 
@@ -62,7 +62,7 @@ const item = {
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 px-6 bg-background relative">
+    <section id="features" className="py-24 px-6 bg-background relative">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -76,11 +76,11 @@ const FeaturesSection = () => {
           </span>
           <h2 className="mt-3 text-3xl md:text-4xl font-bold font-display text-foreground">
             Everything you need to{" "}
-            <span className="text-gradient">learn & recruit</span>
+            <span className="text-gradient">learn intelligently</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto text-lg">
-            A dual-purpose platform combining intelligent learning management
-            with AI-powered talent discovery.
+            An AI-first Learning Management System designed for modern
+            education, focused on growth, insight, and constructive feedback.
           </p>
         </motion.div>
 
