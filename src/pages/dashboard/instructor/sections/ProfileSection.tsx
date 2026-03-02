@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { XCircle, CheckCircle2 } from "lucide-react";
 
 const ProfileSection = () => {
   const { toast } = useToast();
   const [name, setName] = useState("Dr. Sarah Chen");
-  const [title, setTitle] = useState("Associate Professor · Computer Science");
+  const [username] = useState("sarah.chen");
+  const [email, setEmail] = useState("instructor@edu.com");
   const [bio, setBio] = useState(
     "Researcher and educator specializing in distributed systems and React architecture.",
   );
@@ -18,6 +20,11 @@ const ProfileSection = () => {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const validateEmail = (value: string) => {
+    if (!value) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
 
   return (
     <>
@@ -49,17 +56,30 @@ const ProfileSection = () => {
         </div>
         <div>
           <label className="text-sm font-medium text-foreground">
-            Title / Department
+            Username
           </label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1"
-          />
+          <Input value={username} className="mt-1" disabled />
+          <p className="text-xs text-muted-foreground mt-1">
+            Username is assigned by the administrator and cannot be changed.
+          </p>
         </div>
         <div>
           <label className="text-sm font-medium text-foreground">Email</label>
-          <Input defaultValue="instructor@edu.com" disabled className="mt-1" />
+          <div className="relative">
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 pr-9"
+            />
+
+            {email && validateEmail(email) && (
+              <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
+            )}
+
+            {email && !validateEmail(email) && (
+              <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
+            )}
+          </div>
         </div>
         <div>
           <label className="text-sm font-medium text-foreground">Bio</label>

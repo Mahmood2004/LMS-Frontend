@@ -13,19 +13,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { PRESET_SKILLS } from "../data/skills";
 
 const ProfileSection = () => {
   const { toast } = useToast();
   const [name, setName] = useState("Alex Rivera");
+  const [username] = useState("alex_rivera");
+  const [email, setEmail] = useState("student@edu.com");
   const [bio, setBio] = useState(
     "Computer Science student passionate about AI and distributed systems.",
   );
-  const [phone, setPhone] = useState("+1 (555) 000-1234");
   const [cvFile, setCvFile] = useState<string | null>(null);
   const [linkedin, setLinkedin] = useState("");
   const [github, setGithub] = useState("");
   const [portfolio, setPortfolio] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillQuery, setSkillQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const validateUrl = (url: string, requiredDomain?: string) => {
     if (!url) return true;
@@ -41,6 +46,11 @@ const ProfileSection = () => {
     } catch {
       return false;
     }
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const getValidationState = (value: string, requiredDomain?: string) => {
@@ -59,7 +69,33 @@ const ProfileSection = () => {
     }
   };
 
+  const filteredSkills = PRESET_SKILLS.filter(
+    (skill) =>
+      skill.toLowerCase().includes(skillQuery.toLowerCase()) &&
+      !skills.includes(skill),
+  );
+
+  const addSkill = (skill: string) => {
+    setSkills((prev) => [...prev, skill]);
+    setSkillQuery("");
+    setShowSuggestions(false);
+  };
+
+  const removeSkill = (skill: string) => {
+    setSkills((prev) => prev.filter((s) => s !== skill));
+  };
+
   const handleSave = () => {
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
     toast({
       title: "Profile saved!",
       description: "Your changes have been updated.",
@@ -141,19 +177,31 @@ const ProfileSection = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground">Email</label>
-            <Input defaultValue="student@edu.com" className="mt-1" disabled />
+            <label className="text-sm font-medium text-foreground">
+              Username
+            </label>
+            <Input value={username} className="mt-1" disabled />
+            <p className="text-xs text-muted-foreground mt-1">
+              Username is assigned by the administrator and cannot be changed.
+            </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-foreground">Phone</label>
-            <Input
-              value={phone}
-              onChange={(e) => {
-                const numbersOnly = e.target.value.replace(/\D/g, "");
-                setPhone(numbersOnly);
-              }}
-              className="mt-1"
-            />
+            <label className="text-sm font-medium text-foreground">Email</label>
+            <div className="relative">
+              <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 pr-9"
+              />
+
+              {email && validateEmail(email) && (
+                <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
+              )}
+
+              {email && !validateEmail(email) && (
+                <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
+              )}
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium text-foreground">Bio</label>
@@ -162,6 +210,58 @@ const ProfileSection = () => {
               onChange={(e) => setBio(e.target.value)}
               className="mt-1 min-h-[90px]"
             />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">
+              Skills
+            </label>
+
+            {/* Selected Skills */}
+            <div className="flex flex-wrap gap-2 mt-2 mb-2">
+              {skills.map((skill) => (
+                <div
+                  key={skill}
+                  className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm flex items-center gap-2"
+                >
+                  {skill}
+                  <button
+                    onClick={() => removeSkill(skill)}
+                    className="text-xs hover:text-red-500"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Input
+                placeholder="Search and add skills..."
+                value={skillQuery}
+                onChange={(e) => {
+                  setSkillQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className="mt-1"
+              />
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && skillQuery && filteredSkills.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {filteredSkills.map((skill) => (
+                    <div
+                      key={skill}
+                      onClick={() => addSkill(skill)}
+                      className="px-4 py-2 text-sm hover:bg-accent cursor-pointer transition-colors"
+                    >
+                      {skill}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <Button variant="hero" onClick={handleSave}>
             Save Changes
@@ -192,7 +292,7 @@ const ProfileSection = () => {
                   {cvFile}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Uploaded just now
+                  Uploaded Successfully
                 </p>
               </div>
               <Button

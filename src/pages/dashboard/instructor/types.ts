@@ -48,6 +48,8 @@ export type StudentEntry = {
   email: string;
   courses: string[];
   feedback: string;
+  cvUrl: string;
+  skills: string[];
 };
 
 export type SidebarItem = {

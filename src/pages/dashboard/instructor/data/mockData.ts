@@ -156,6 +156,8 @@ export const studentsData: StudentEntry[] = [
     email: "alex@edu.com",
     courses: ["Advanced React Patterns", "Cloud Computing"],
     feedback: "Excellent work overall. Strong technical fundamentals.",
+    cvUrl: "/mock-cvs/john-doe-cv.pdf",
+    skills: ["React", "Node.js", "System Design"],
   },
   {
     id: 2,
@@ -163,6 +165,8 @@ export const studentsData: StudentEntry[] = [
     email: "priya@edu.com",
     courses: ["Advanced React Patterns"],
     feedback: "Good progress. Needs improvement in code review practices.",
+    cvUrl: "/mock-cvs/john-doe-cv.pdf",
+    skills: ["React", "Node.js", "System Design"],
   },
   {
     id: 3,
@@ -171,6 +175,8 @@ export const studentsData: StudentEntry[] = [
     courses: ["System Design Architecture", "Cloud Computing"],
     feedback:
       "Solid understanding. Could push further on system design problems.",
+    cvUrl: "/mock-cvs/john-doe-cv.pdf",
+    skills: ["React", "Node.js", "System Design"],
   },
   {
     id: 4,
@@ -182,6 +188,8 @@ export const studentsData: StudentEntry[] = [
       "System Design",
     ],
     feedback: "Outstanding student. Consistently high-quality work.",
+    cvUrl: "/mock-cvs/john-doe-cv.pdf",
+    skills: ["React", "Node.js", "System Design"],
   },
   {
     id: 5,
@@ -189,6 +197,8 @@ export const studentsData: StudentEntry[] = [
     email: "david@edu.com",
     courses: ["System Design Architecture"],
     feedback: "Very promising. Analytical thinking is a strong suit.",
+    cvUrl: "/mock-cvs/john-doe-cv.pdf",
+    skills: ["React", "Node.js", "System Design"],
   },
 ];
 

@@ -146,6 +146,41 @@ const StudentsSection = () => {
                     "{selectedStudent.feedback}"
                   </blockquote>
                 </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    {selectedStudent.name}'s CV
+                  </h4>
+
+                  {selectedStudent.cvUrl ? (
+                    <a
+                      href={selectedStudent.cvUrl}
+                      download
+                      className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Download CV
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      No CV uploaded.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    Skills
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStudent.skills?.map((skill: string) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
