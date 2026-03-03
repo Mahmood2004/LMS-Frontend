@@ -14,18 +14,18 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast } = useToast(); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulated login - will be replaced with real auth
     setTimeout(() => {
       setIsLoading(false);
-      // Demo routing based on email pattern
       if (email.includes("instructor")) {
         navigate("/dashboard/instructor");
+      } else if (email.includes("admin")) {
+        navigate("/dashboard/admin");
       } else {
         navigate("/dashboard/student");
       }

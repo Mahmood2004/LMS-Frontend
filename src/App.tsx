@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import StudentDashboard from "./pages/dashboard/student";
 import InstructorDashboard from "./pages/dashboard/instructor";
-
+import AdminDashboard from "./pages/dashboard/admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +26,7 @@ const App = () => (
             path="/dashboard/instructor"
             element={<InstructorDashboard />}
           />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -35,3 +36,4 @@ const App = () => (
 );
 
 export default App;
+
