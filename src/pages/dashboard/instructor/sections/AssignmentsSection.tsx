@@ -23,9 +23,11 @@ const AssignmentsSection = ({
     "create",
   );
   const [gradingId, setGradingId] = useState<number | null>(null);
+
   const [grades, setGrades] = useState<
     Record<number, { rating: number; feedback: string }>
   >({});
+
   const [form, setForm] = useState({
     title: "",
     type: preselectedType ?? "assignment",
@@ -35,6 +37,27 @@ const AssignmentsSection = ({
     dueDate: "",
     description: "",
   });
+
+  const [displayCourse, setDisplayCourse] = useState(
+    preselectedCourseId
+      ? coursesData.find((c) => c.id === preselectedCourseId)?.name
+      : coursesData[0].name,
+  );
+
+  const [expandedAssignments, setExpandedAssignments] = useState<number[]>([]);
+
+  const [postedAssignments, setPostedAssignments] = useState<
+    {
+      id: number;
+      title: string;
+      type: "assignment" | "project";
+      course: string;
+      dueDate: string;
+      description: string;
+      createdAt: string;
+    }[]
+  >([]);
+
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -57,12 +80,33 @@ const AssignmentsSection = ({
         title: "Missing information",
         description: "Please fill in all required fields.",
         variant: "destructive",
+        duration: 3000,
       });
       return;
     }
     setSubmitting(true);
     setTimeout(() => {
+      const newAssignment = {
+        id: Date.now(),
+        title: form.title,
+        type: form.type,
+        course: form.course,
+        dueDate: form.dueDate,
+        description: form.description,
+        createdAt: new Date().toISOString(),
+      };
+
+      setPostedAssignments((prev) => [
+        {
+          ...newAssignment,
+          id: Date.now(),
+        },
+        ...prev,
+      ]);
+      setDisplayCourse(form.course);
+
       setSubmitting(false);
+
       setForm({
         title: "",
         type: preselectedType ?? "assignment",
@@ -72,12 +116,25 @@ const AssignmentsSection = ({
         dueDate: "",
         description: "",
       });
+
       toast({
-        title: `${form.type === "assignment" ? "Assignment" : "Project"} Posted!`,
+        title:
+          form.type === "assignment" ? "Assignment Posted!" : "Project Posted!",
         description: `"${form.title}" has been assigned to students.`,
         duration: 3000,
       });
     }, 600);
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm(`Are you sure you want to delete this ${form.type}?`)) {
+      setPostedAssignments((prev) => prev.filter((a) => a.id !== id));
+      toast({
+        title: "Deleted",
+        description: `${form.type} has been removed.`,
+        duration: 3000,
+      });
+    }
   };
 
   const handleGrade = (id: number) => {
@@ -88,6 +145,7 @@ const AssignmentsSection = ({
         title: "Rating required",
         description: "Please select a performance rating before submitting.",
         variant: "destructive",
+        duration: 3000,
       });
       return;
     }
@@ -97,6 +155,7 @@ const AssignmentsSection = ({
         title: "Feedback required",
         description: "Please provide written feedback before submitting.",
         variant: "destructive",
+        duration: 3000,
       });
       return;
     }
@@ -201,6 +260,7 @@ const AssignmentsSection = ({
                 value={form.dueDate}
                 onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
                 className="mt-1"
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div className="md:col-span-2">
@@ -226,6 +286,83 @@ const AssignmentsSection = ({
             <Send className="w-4 h-4" />
             {submitting ? "Posting..." : "Post Assignment"}
           </Button>
+
+          {/* Display Course Selector */}
+          <div className="mt-6 flex items-center gap-2">
+            <label className="text-sm font-medium text-foreground">
+              Show Assignments for:
+            </label>
+            <select
+              value={displayCourse}
+              onChange={(e) => setDisplayCourse(e.target.value)}
+              className="text-sm rounded-lg border border-border bg-background text-foreground px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {coursesData.map((c) => (
+                <option key={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Posted Assignments */}
+          {postedAssignments
+            .filter((a) => a.course === displayCourse)
+            .map((assignment) => {
+              const isExpanded = expandedAssignments.includes(assignment.id);
+              return (
+                <div
+                  key={assignment.id}
+                  className="p-5 rounded-xl bg-accent/20 border border-border"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="font-semibold text-foreground">
+                        {assignment.title}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Due: {assignment.dueDate}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Posted{" "}
+                        {new Date(assignment.createdAt).toLocaleDateString()}
+                      </div>
+
+                      {/* Description */}
+                      <p
+                        className={`text-sm text-muted-foreground mt-3 ${!isExpanded ? "line-clamp-2" : ""}`}
+                      >
+                        {assignment.description}
+                      </p>
+                      {assignment.description.length > 100 && (
+                        <button
+                          className="text-xs text-primary mt-1 hover:underline"
+                          onClick={() =>
+                            setExpandedAssignments((prev) =>
+                              isExpanded
+                                ? prev.filter((id) => id !== assignment.id)
+                                : [...prev, assignment.id],
+                            )
+                          }
+                        >
+                          {isExpanded ? "Show Less" : "View More"}
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
+                      {assignment.type}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(assignment.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
         </motion.div>
       )}
 
