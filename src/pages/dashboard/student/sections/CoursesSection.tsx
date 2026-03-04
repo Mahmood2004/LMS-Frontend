@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, ChevronDown, ChevronUp, X } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronUp, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import ModuleIcon from "../../shared/components/ModuleIcon";
 import { courses } from "../data/mockData";
+import { Input } from "@/components/ui/input";
 
 const CoursesSection = () => {
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
   const [expandedCourse, setExpandedCourse] = useState<number | null>(null);
   const [viewingContent, setViewingContent] = useState<{
     title: string;
@@ -24,8 +26,20 @@ const CoursesSection = () => {
       <p className="mt-1 text-muted-foreground">
         Browse your enrolled courses and study materials.
       </p>
+      <div className="mt-6 relative">
+        <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search courses..."
+          className="pl-9"
+        />
+      </div>
       <div className="mt-6 sm:mt-8 space-y-4">
         {[...courses]
+          .filter((course) =>
+            course.name.toLowerCase().includes(search.toLowerCase()),
+          )
           .sort((a, b) => b.createdAt - a.createdAt)
           .map((course) => (
             <motion.div

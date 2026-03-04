@@ -10,7 +10,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 interface AttendanceSectionProps {
-  selectedCourseId: number | null;
+  selectedCourseId: number | undefined;
 }
 
 const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
@@ -40,14 +40,14 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Attendance");
 
-    // 🔷 Title Section
+    // Title Section
     worksheet.addRow([`Attendance Report`]);
     worksheet.addRow([]);
     worksheet.addRow(["Course:", courseName]);
     worksheet.addRow(["Date:", today]);
     worksheet.addRow([]);
 
-    // 🔷 Header Row
+    // Header Row
     const headerRow = worksheet.addRow([
       "Student Name",
       "Student Email",
@@ -60,7 +60,7 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
     // Column widths
     worksheet.columns = [{ width: 25 }, { width: 30 }, { width: 15 }];
 
-    // 🔷 Student Rows
+    // Student Rows
     rosterData.forEach((student) => {
       const status = attendance[student.id];
 
@@ -70,7 +70,7 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
         status.toUpperCase(),
       ]);
 
-      // 🎨 Status Color Styling
+      // Status Color Styling
       const statusCell = row.getCell(3);
 
       if (status === "present") {
@@ -103,7 +103,7 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
       statusCell.alignment = { horizontal: "center" };
     });
 
-    // 🔷 Summary Section
+    // Summary Section
     worksheet.addRow([]);
     worksheet.addRow(["Summary"]);
     worksheet.getRow(worksheet.lastRow!.number).font = { bold: true };
@@ -123,7 +123,7 @@ const AttendanceSection = ({ selectedCourseId }: AttendanceSectionProps) => {
     worksheet.addRow(["Late:", lateCount]);
     worksheet.addRow(["Total Students:", rosterData.length]);
 
-    // 🔷 Generate File
+    // Generate File
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

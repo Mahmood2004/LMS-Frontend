@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useParams, useNavigate as useRouterNavigate } from "react-router-dom";
 import AdminLayout from "./layout";
 
 import InstructorsSection from "./sections/InstructorsSection";
@@ -7,12 +8,24 @@ import StudentsSection from "./sections/StudentsSection";
 import SkillsSection from "./sections/SkillsSection";
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState<
-    "instructors" | "students" | "skills"
-  >("instructors");
+  type AdminSection = "instructors" | "students" | "skills";
 
-  const navigate = (section: "instructors" | "students" | "skills") => {
+  const params = useParams<{ section?: AdminSection }>();
+  const navigate = useRouterNavigate();
+
+  const validSections: AdminSection[] = ["instructors", "students", "skills"];
+  const initialSection: AdminSection = validSections.includes(
+    params.section as AdminSection,
+  )
+    ? (params.section as AdminSection)
+    : "instructors";
+
+  const [activeSection, setActiveSection] =
+    useState<AdminSection>(initialSection);
+
+  const handleNavigate = (section: "instructors" | "students" | "skills") => {
     setActiveSection(section);
+    navigate(`/dashboard/admin/${section}`);
   };
 
   const renderContent = () => {
@@ -29,7 +42,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <AdminLayout activeSection={activeSection} onNavigate={navigate}>
+    <AdminLayout activeSection={activeSection} onNavigate={handleNavigate}>
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSection}

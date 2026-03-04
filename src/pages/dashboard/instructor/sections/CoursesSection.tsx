@@ -9,6 +9,7 @@ import {
   Trash2,
   Film,
   FileText,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ interface CoursesSectionProps {
 
 const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -199,6 +201,16 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
         ))}
       </div>
 
+      <div className="mt-6 relative">
+        <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search courses..."
+          className="pl-9"
+        />
+      </div>
+
       {/* New Course Form */}
       <AnimatePresence>
         {showForm && (
@@ -284,6 +296,9 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
       {/* Course Cards */}
       <div className="mt-6 space-y-4">
         {[...courses]
+          .filter((course) =>
+            course.name.toLowerCase().includes(search.toLowerCase()),
+          )
           .sort((a, b) => b.createdAt - a.createdAt)
           .map((course) => (
             <motion.div

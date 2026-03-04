@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +7,7 @@ import { PRESET_SKILLS } from "../data/skills";
 
 const SkillsSection = () => {
   const { toast } = useToast();
+  const [search, setSearch] = useState("");
   const [skills, setSkills] = useState<string[]>([...PRESET_SKILLS]);
   const [newSkill, setNewSkill] = useState("");
 
@@ -48,8 +49,17 @@ const SkillsSection = () => {
       <p className="mt-1 text-muted-foreground">
         View, add, or remove preset skills available to students.
       </p>
+      <div className="mt-6 relative">
+        <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search skills..."
+          className="pl-9"
+        />
+      </div>
 
-      <div className="mt-6 max-w-2xl p-6 rounded-2xl bg-card border border-border shadow-card space-y-4">
+      <div className="mt-6 p-6 rounded-2xl bg-card border border-border shadow-card space-y-4">
         <div className="flex gap-2">
           <Input
             placeholder="Add new skill..."
@@ -63,17 +73,21 @@ const SkillsSection = () => {
         </div>
 
         <div className="flex flex-wrap gap-2 mt-2">
-          {skills.map((skill) => (
-            <div
-              key={skill}
-              className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
-            >
-              {skill}
-              <button onClick={() => handleDeleteSkill(skill)}>
-                <X className="w-3 h-3 text-red-500" />
-              </button>
-            </div>
-          ))}
+          {skills
+            .filter((skill) =>
+              skill.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map((skill) => (
+              <div
+                key={skill}
+                className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
+              >
+                {skill}
+                <button onClick={() => handleDeleteSkill(skill)}>
+                  <X className="w-3 h-3 text-red-500" />
+                </button>
+              </div>
+            ))}
         </div>
       </div>
     </>

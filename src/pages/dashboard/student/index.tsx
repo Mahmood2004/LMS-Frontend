@@ -8,19 +8,41 @@ import AssistantSection from "./sections/AssistantSection";
 import NotificationsSection from "./sections/NotificationsSection";
 import ProfileSection from "./sections/ProfileSection";
 import { notificationsData as initialNotifications } from "./data/mockData";
+import { useParams, useNavigate as useRouterNavigate } from "react-router-dom";
 
 const StudentDashboard = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const params = useParams<{ section?: string }>();
+  const navigate = useRouterNavigate();
+
+  const validSections = [
+    "dashboard",
+    "courses",
+    "assignments",
+    "assistant",
+    "notifications",
+    "profile",
+  ] as const;
+
+  type Section = (typeof validSections)[number];
+
+  const initialSection: Section = validSections.includes(
+    params.section as Section,
+  )
+    ? (params.section as Section)
+    : "dashboard";
+
+  const [activeSection, setActiveSection] = useState<Section>(initialSection);
   const [notifications, setNotifications] = useState(initialNotifications);
 
-  const navigate = (section: string) => {
+  const handleNavigate = (section: Section) => {
     setActiveSection(section);
+    navigate(`/dashboard/student/${section}`);
   };
 
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <DashboardSection onNavigate={navigate} />;
+        return <DashboardSection onNavigate={handleNavigate} />;
       case "courses":
         return <CoursesSection />;
       case "assignments":
@@ -44,7 +66,7 @@ const StudentDashboard = () => {
   return (
     <StudentLayout
       activeSection={activeSection}
-      onNavigate={navigate}
+      onNavigate={handleNavigate}
       notifications={notifications}
       setNotifications={setNotifications}
     >

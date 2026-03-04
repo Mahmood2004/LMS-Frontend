@@ -7,23 +7,49 @@ import AssignmentsSection from "./sections/AssignmentsSection";
 import FeedbackSection from "./sections/FeedbackSection";
 import StudentsSection from "./sections/StudentsSection";
 import ProfileSection from "./sections/ProfileSection";
+import { useParams, useNavigate as useRouterNavigate } from "react-router-dom";
 
 const InstructorDashboard = () => {
-  const [activeSection, setActiveSection] = useState("courses");
-  const [preselectedCourseId, setPreselectedCourseId] = useState<number | null>(
-    null,
-  );
+  const params = useParams<{ section?: string }>();
+  const navigateRouter = useRouterNavigate();
+
+  const validSections = [
+    "courses",
+    "attendance",
+    "assignments",
+    "feedback",
+    "students",
+    "profile",
+  ] as const;
+
+  type Section = (typeof validSections)[number];
+
+  const initialSection: Section = validSections.includes(
+    params.section as Section,
+  )
+    ? (params.section as Section)
+    : "courses";
+
+  const [activeSection, setActiveSection] = useState<Section>(initialSection);
+
+  const [preselectedCourseId, setPreselectedCourseId] = useState<
+    number | undefined
+  >(undefined);
+
   const [preselectedAssignmentType, setPreselectedAssignmentType] = useState<
     "assignment" | "project"
   >("assignment");
 
   const navigate = (
-    section: string,
+    section: Section,
     options?: { courseId?: number; assignmentType?: "assignment" | "project" },
   ) => {
     setActiveSection(section);
-    if (options?.courseId) setPreselectedCourseId(options.courseId);
-    else setPreselectedCourseId(null);
+    navigateRouter(`/dashboard/instructor/${section}`);
+
+    if (options?.courseId !== undefined)
+      setPreselectedCourseId(options.courseId);
+    else setPreselectedCourseId(undefined);
 
     if (options?.assignmentType)
       setPreselectedAssignmentType(options.assignmentType);

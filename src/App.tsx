@@ -21,12 +21,18 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard/student" element={<StudentDashboard />} />
           <Route
-            path="/dashboard/instructor"
+            path="/dashboard/student/:section?"
+            element={<StudentDashboard />}
+          />
+          <Route
+            path="/dashboard/instructor/:section?"
             element={<InstructorDashboard />}
           />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route
+            path="/dashboard/admin/:section?"
+            element={<AdminDashboard />}
+          />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -36,4 +42,3 @@ const App = () => (
 );
 
 export default App;
-
