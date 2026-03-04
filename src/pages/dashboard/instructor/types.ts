@@ -24,13 +24,26 @@ export type RosterStudent = {
   email: string;
 };
 
+export type Assignment = {
+  id: number;
+  course_id: number;
+  title: string;
+  description: string;
+  type: "assignment" | "project";
+  dueDate: string;
+  maxScore: number;
+  createdAt: string;
+};
+
 export type Submission = {
   id: number;
   student: string;
+  assignment_id: number;
+  course_id: number;
   title: string;
-  course: string;
   submitted: string;
   type: string;
+  graded: boolean;
 };
 
 export type FeedbackEntry = {

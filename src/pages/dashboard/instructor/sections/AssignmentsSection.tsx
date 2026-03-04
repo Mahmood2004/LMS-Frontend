@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Pencil } from "lucide-react";
 import Initials from "../../shared/components/Initials";
 import StarRating from "../../shared/components/StarRating";
-import { coursesData, submissionsData } from "../data/mockData";
+import {
+  coursesData,
+  submissionsData,
+  feedbackHistoryData,
+  assignmentsData,
+} from "../data/mockData";
+import type { Submission, FeedbackEntry } from "../types";
 
 interface AssignmentsSectionProps {
   preselectedCourseId?: number;
@@ -22,6 +29,14 @@ const AssignmentsSection = ({
   const [activeTab, setActiveTab] = useState<"create" | "submissions">(
     "create",
   );
+
+  const [selectedCourseId, setSelectedCourseId] = useState<number>(1);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(0);
+
+  const [submissions, setSubmissions] = useState<Submission[]>(submissionsData);
+  const [feedbackHistory, setFeedbackHistory] =
+    useState<FeedbackEntry[]>(feedbackHistoryData);
+
   const [gradingId, setGradingId] = useState<number | null>(null);
 
   const [grades, setGrades] = useState<
@@ -57,6 +72,17 @@ const AssignmentsSection = ({
       createdAt: string;
     }[]
   >([]);
+
+  const [editingAssignment, setEditingAssignment] = useState<number | null>(
+    null,
+  );
+
+  const [editForm, setEditForm] = useState({
+    title: "",
+    type: "assignment" as "assignment" | "project",
+    dueDate: "",
+    description: "",
+  });
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -127,19 +153,50 @@ const AssignmentsSection = ({
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm(`Are you sure you want to delete this ${form.type}?`)) {
+    const assignmentToDelete = postedAssignments.find((a) => a.id === id);
+    if (!assignmentToDelete) return;
+    if (
+      window.confirm(
+        `Are you sure you want to delete this ${assignmentToDelete.type}?`,
+      )
+    ) {
       setPostedAssignments((prev) => prev.filter((a) => a.id !== id));
       toast({
         title: "Deleted",
-        description: `${form.type} has been removed.`,
+        description: `${assignmentToDelete.type.charAt(0).toUpperCase() + assignmentToDelete.type.slice(1)} has been deleted.`,
         duration: 3000,
       });
     }
   };
 
+  const handleUpdate = (id: number) => {
+    setPostedAssignments((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              title: editForm.title,
+              type: editForm.type,
+              dueDate: editForm.dueDate,
+              description: editForm.description,
+            }
+          : a,
+      ),
+    );
+
+    setEditingAssignment(null);
+
+    toast({
+      title: "Updated",
+      description: `${editForm.type} "${editForm.title}" has been updated successfully.`,
+      duration: 3000,
+    });
+  };
+
   const handleGrade = (id: number) => {
     const g = grades[id];
 
+    // Validate rating
     if (!g?.rating) {
       toast({
         title: "Rating required",
@@ -150,6 +207,7 @@ const AssignmentsSection = ({
       return;
     }
 
+    // Validate feedback
     if (!g.feedback || g.feedback.trim() === "") {
       toast({
         title: "Feedback required",
@@ -159,13 +217,71 @@ const AssignmentsSection = ({
       });
       return;
     }
+
+    // Find the submission
+    const submission = submissions.find((s) => s.id === id);
+    if (!submission) return;
+
+    const courseName =
+      coursesData.find((c) => c.id === submission.course_id)?.name ??
+      "Unknown Course";
+
+    // Mark submission as graded
+    setSubmissions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, graded: true } : s)),
+    );
+
+    // Add or update feedback history
+    setFeedbackHistory((prev) => {
+      const existing = prev.find((f) => f.id === id);
+
+      if (existing) {
+        // Update existing feedback
+        return prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                rating: g.rating,
+                feedback: g.feedback,
+                date: new Date().toISOString(),
+              }
+            : f,
+        );
+      } else {
+        // Add new feedback
+        return [
+          ...prev,
+          {
+            id,
+            student: submission.student,
+            course: courseName,
+            rating: g.rating,
+            feedback: g.feedback,
+            date: new Date().toISOString(),
+          },
+        ];
+      }
+    });
+
+    // Close grading panel
     setGradingId(null);
+
+    // Toast notification
     toast({
-      title: "Graded!",
+      title: submission.graded ? "Grade Updated!" : "Graded!",
       description: "Your feedback has been submitted.",
       duration: 3000,
     });
   };
+
+  const filteredSubmissions = submissions
+    .filter((s) => s.course_id === selectedCourseId)
+    .filter((s) =>
+      selectedAssignmentId === 0
+        ? true
+        : s.assignment_id === selectedAssignmentId,
+    )
+    .sort((a, b) => Number(a.graded) - Number(b.graded));
 
   return (
     <>
@@ -210,7 +326,7 @@ const AssignmentsSection = ({
           <div className="grid md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="text-sm font-medium text-foreground">
-                Title *
+                Title
               </label>
               <Input
                 value={form.title}
@@ -313,53 +429,161 @@ const AssignmentsSection = ({
                   key={assignment.id}
                   className="p-5 rounded-xl bg-accent/20 border border-border"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="font-semibold text-foreground">
-                        {assignment.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Due: {assignment.dueDate}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Posted{" "}
-                        {new Date(assignment.createdAt).toLocaleDateString()}
+                  {editingAssignment === assignment.id ? (
+                    <div className="w-full space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-foreground">
+                          Title
+                        </label>
+                        <input
+                          value={editForm.title}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, title: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-background"
+                          placeholder="Enter assignment title"
+                        />
                       </div>
 
-                      {/* Description */}
-                      <p
-                        className={`text-sm text-muted-foreground mt-3 ${!isExpanded ? "line-clamp-2" : ""}`}
-                      >
-                        {assignment.description}
-                      </p>
-                      {assignment.description.length > 100 && (
-                        <button
-                          className="text-xs text-primary mt-1 hover:underline"
-                          onClick={() =>
-                            setExpandedAssignments((prev) =>
-                              isExpanded
-                                ? prev.filter((id) => id !== assignment.id)
-                                : [...prev, assignment.id],
-                            )
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-foreground">
+                          Type
+                        </label>
+                        <select
+                          value={editForm.type}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              type: e.target.value as "assignment" | "project",
+                            })
                           }
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-background"
                         >
-                          {isExpanded ? "Show Less" : "View More"}
-                        </button>
-                      )}
+                          <option value="assignment">Assignment</option>
+                          <option value="project">Project</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-foreground">
+                          Due Date
+                        </label>
+                        <input
+                          type="date"
+                          value={editForm.dueDate}
+                          min={
+                            new Date(assignment.createdAt)
+                              .toISOString()
+                              .split("T")[0]
+                          }
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              dueDate: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-background"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-foreground">
+                          Description
+                        </label>
+                        <textarea
+                          value={editForm.description}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              description: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-background"
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdate(assignment.id)}
+                        >
+                          Save
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingAssignment(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
-                      {assignment.type}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(assignment.id)}
-                      >
-                        Delete
-                      </Button>
+                  ) : (
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground">
+                          {assignment.title}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Due: {assignment.dueDate}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Posted{" "}
+                          {new Date(assignment.createdAt).toLocaleDateString()}
+                        </div>
+
+                        <p
+                          className={`text-sm text-muted-foreground mt-3 ${!isExpanded ? "line-clamp-2" : ""}`}
+                        >
+                          {assignment.description}
+                        </p>
+                        {assignment.description.length > 100 && (
+                          <button
+                            className="text-xs text-primary mt-1 hover:underline"
+                            onClick={() =>
+                              setExpandedAssignments((prev) =>
+                                isExpanded
+                                  ? prev.filter((id) => id !== assignment.id)
+                                  : [...prev, assignment.id],
+                              )
+                            }
+                          >
+                            {isExpanded ? "Show Less" : "View More"}
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
+                        {assignment.type}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingAssignment(assignment.id);
+                            setEditForm({
+                              title: assignment.title,
+                              type: assignment.type,
+                              dueDate: assignment.dueDate,
+                              description: assignment.description,
+                            });
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(assignment.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -372,7 +596,54 @@ const AssignmentsSection = ({
           animate={{ opacity: 1 }}
           className="mt-6 space-y-4"
         >
-          {submissionsData.map((sub) => (
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 items-end mb-4">
+            {/* Course Dropdown */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Course
+              </label>
+              <select
+                value={selectedCourseId}
+                onChange={(e) => {
+                  setSelectedCourseId(Number(e.target.value));
+                  setSelectedAssignmentId(0); // reset assignment
+                }}
+                className="mt-1 w-full text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {coursesData.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Assignment Dropdown */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Assignment
+              </label>
+              <select
+                value={selectedAssignmentId}
+                onChange={(e) =>
+                  setSelectedAssignmentId(Number(e.target.value))
+                }
+                className="mt-1 w-full text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value={0}>All Assignments</option>
+                {assignmentsData
+                  .filter((a) => a.course_id === selectedCourseId)
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.title}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          </div>
+
+          {filteredSubmissions.map((sub) => (
             <div
               key={sub.id}
               className="rounded-xl bg-card border border-border shadow-card overflow-hidden"
@@ -384,23 +655,49 @@ const AssignmentsSection = ({
                     {sub.title}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {sub.student} · {sub.course}
+                    {sub.student} ·{" "}
+                    {coursesData.find((c) => c.id === sub.course_id)?.name ??
+                      "Unknown Course"}
                   </div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     Submitted {sub.submitted}
                   </div>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
-                  {sub.type}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium capitalize">
+                    {sub.type}
+                  </span>
+                  {sub.graded && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium">
+                      Graded
+                    </span>
+                  )}
+                </div>
                 <Button
                   size="sm"
                   variant="hero"
-                  onClick={() =>
-                    setGradingId(gradingId === sub.id ? null : sub.id)
-                  }
+                  onClick={() => {
+                    setGradingId(gradingId === sub.id ? null : sub.id);
+
+                    const existing = feedbackHistory.find(
+                      (f) => f.id === sub.id,
+                    );
+                    if (existing) {
+                      setGrades((prev) => ({
+                        ...prev,
+                        [sub.id]: {
+                          rating: existing.rating,
+                          feedback: existing.feedback,
+                        },
+                      }));
+                    }
+                  }}
                 >
-                  {gradingId === sub.id ? "Close" : "Grade"}
+                  {gradingId === sub.id
+                    ? "Close"
+                    : sub.graded
+                      ? "Edit Grade"
+                      : "Grade"}
                 </Button>
               </div>
 

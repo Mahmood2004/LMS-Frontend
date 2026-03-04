@@ -5,6 +5,7 @@ import {
   Star,
   Users,
   User,
+  BadgeCheck,
 } from "lucide-react";
 import type {
   InstructorCourse,
@@ -13,6 +14,7 @@ import type {
   FeedbackEntry,
   StudentEntry,
   SidebarItem,
+  Assignment,
 } from "../types";
 
 export const coursesData: InstructorCourse[] = [
@@ -84,38 +86,89 @@ export const rosterData: RosterStudent[] = [
   { id: 5, name: "David Kim", email: "david@edu.com" },
 ];
 
+export const assignmentsData: Assignment[] = [
+  {
+    id: 1,
+    course_id: 1,
+    title: "React Hooks Deep Dive",
+    description: "Advanced Hooks usage with context and effects.",
+    type: "assignment",
+    dueDate: "2026-02-20",
+    maxScore: 100,
+    createdAt: "2026-02-10",
+  },
+  {
+    id: 2,
+    course_id: 1,
+    title: "State Management Essay",
+    description: "Compare Redux, MobX, and Zustand in React apps.",
+    type: "assignment",
+    dueDate: "2026-02-22",
+    maxScore: 100,
+    createdAt: "2026-02-11",
+  },
+  {
+    id: 3,
+    course_id: 2,
+    title: "Microservices Design Doc",
+    description: "Design a microservices architecture for e-commerce.",
+    type: "project",
+    dueDate: "2026-02-25",
+    maxScore: 100,
+    createdAt: "2026-02-12",
+  },
+  {
+    id: 4,
+    course_id: 3,
+    title: "Cloud Architecture Lab",
+    description: "Deploy an app using AWS cloud services.",
+    type: "project",
+    dueDate: "2026-02-28",
+    maxScore: 100,
+    createdAt: "2026-02-13",
+  },
+];
+
 export const submissionsData: Submission[] = [
   {
     id: 1,
     student: "Alex Rivera",
+    assignment_id: 1,
+    course_id: 1,
     title: "React Hooks Deep Dive",
-    course: "Advanced React Patterns",
     submitted: "Feb 16, 2026",
     type: "assignment",
+    graded: false,
   },
   {
     id: 2,
     student: "Priya Sharma",
+    assignment_id: 2,
+    course_id: 1,
     title: "State Management Essay",
-    course: "Advanced React Patterns",
     submitted: "Feb 15, 2026",
     type: "assignment",
+    graded: true,
   },
   {
     id: 3,
     student: "Marcus Johnson",
+    assignment_id: 3,
+    course_id: 2,
     title: "Microservices Design Doc",
-    course: "System Design Architecture",
     submitted: "Feb 17, 2026",
     type: "project",
+    graded: false,
   },
   {
     id: 4,
     student: "Lisa Chen",
+    assignment_id: 4,
+    course_id: 3,
     title: "Cloud Architecture Lab",
-    course: "Cloud Computing Essentials",
     submitted: "Feb 16, 2026",
     type: "project",
+    graded: false,
   },
 ];
 
@@ -208,5 +261,6 @@ export const sidebarItems: SidebarItem[] = [
   { icon: ClipboardCheck, label: "Assignments", id: "assignments" },
   { icon: Star, label: "Feedback", id: "feedback" },
   { icon: Users, label: "Students", id: "students" },
+  { icon: BadgeCheck, label: "Skills", id: "skills" },
   { icon: User, label: "Profile", id: "profile" },
 ];

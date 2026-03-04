@@ -1,7 +1,6 @@
 import type {
   InstructorEntry,
   StudentEntry,
-  SkillEntry,
   SidebarItem,
 } from "../types";
 import { Users, Brain, BadgeCheck } from "lucide-react";
@@ -58,17 +57,4 @@ export const studentsData: StudentEntry[] = [
     portfolio: "https://priyasharma.dev",
     courses: ["Advanced React Patterns"],
   },
-];
-
-export const skillsData: SkillEntry[] = [
-  { id: 1, name: "JavaScript" },
-  { id: 2, name: "TypeScript" },
-  { id: 3, name: "React" },
-  { id: 4, name: "Next.js" },
-  { id: 5, name: "Node.js" },
-  { id: 6, name: "Python" },
-  { id: 7, name: "Data Structures" },
-  { id: 8, name: "Algorithms" },
-  { id: 9, name: "System Design" },
-  { id: 10, name: "UI/UX Design" },
 ];
