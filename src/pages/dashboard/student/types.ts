@@ -32,6 +32,7 @@ export type Assignment = {
   due: string;
   status: AssignmentStatus;
   type: "assignment" | "project";
+  fileName?: string;
   grade?: string;
   rating?: number;
   feedback?: string;

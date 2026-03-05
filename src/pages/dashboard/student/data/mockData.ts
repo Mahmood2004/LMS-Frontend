@@ -136,6 +136,7 @@ export const assignmentsData: Assignment[] = [
     course: "System Design Architecture",
     due: "Feb 20, 2026",
     status: "submitted",
+    fileName:"test",
     type: "project",
   },
   {

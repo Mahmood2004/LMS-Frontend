@@ -7,7 +7,6 @@ import {
   Linkedin,
   Github,
   Globe,
-  Upload,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -89,10 +88,14 @@ const AdminStudentsSection = () => {
   };
 
   const handleCvUpload = (file: File) => {
-    if (selectedStudent) {
-      selectedStudent.cvUrl = URL.createObjectURL(file);
-      setSelectedStudent({ ...selectedStudent });
-    }
+    if (!selectedStudent) return;
+
+    const updatedStudent = {
+      ...selectedStudent,
+      cvUrl: URL.createObjectURL(file),
+    };
+
+    setSelectedStudent(updatedStudent);
   };
 
   const validateEmail = (value: string) => {
@@ -237,12 +240,7 @@ const AdminStudentsSection = () => {
                       </label>
                       <Input
                         value={selectedStudent.username}
-                        onChange={(e) =>
-                          setSelectedStudent({
-                            ...selectedStudent,
-                            username: e.target.value,
-                          })
-                        }
+                        disabled
                         className="mt-1"
                       />
                     </div>
@@ -379,14 +377,14 @@ const AdminStudentsSection = () => {
                       />
 
                       {getValidationState(
-                        selectedStudent.linkedin,
+                        selectedStudent.linkedin ?? "",
                         "linkedin.com",
                       ) === "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
 
                       {getValidationState(
-                        selectedStudent.linkedin,
+                        selectedStudent.linkedin ?? "",
                         "linkedin.com",
                       ) === "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
@@ -416,14 +414,13 @@ const AdminStudentsSection = () => {
                       />
 
                       {getValidationState(
-                        selectedStudent.github,
+                        selectedStudent.github ?? "",
                         "github.com",
                       ) === "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
-
                       {getValidationState(
-                        selectedStudent.github,
+                        selectedStudent.github ?? "",
                         "github.com",
                       ) === "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
@@ -452,12 +449,12 @@ const AdminStudentsSection = () => {
                         }
                       />
 
-                      {getValidationState(selectedStudent.portfolio) ===
+                      {/* Portfolio */}
+                      {getValidationState(selectedStudent.portfolio ?? "") ===
                         "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
-
-                      {getValidationState(selectedStudent.portfolio) ===
+                      {getValidationState(selectedStudent.portfolio ?? "") ===
                         "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
                       )}
