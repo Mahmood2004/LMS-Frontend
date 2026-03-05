@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { navItems } from "./data/mockData";
 import { notificationsData as initialNotifications } from "../student/data/mockData";
+import { useAuth } from "@/context/AuthContext";
 
 interface StudentLayoutProps {
   activeSection: string;
@@ -21,9 +22,9 @@ const StudentLayout = ({
   onNavigate,
   children,
   notifications,
-  setNotifications,
 }: StudentLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { logout } = useAuth();
 
   const navigate = (section: string) => {
     onNavigate(section);
@@ -87,16 +88,15 @@ const StudentLayout = ({
             </div>
 
             {/* Desktop sign out */}
-            <Link to="/login">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={logout}
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
           </div>
 
           {/* Mobile hamburger */}
@@ -174,12 +174,16 @@ const StudentLayout = ({
                     </button>
                   ))}
                 <div className="pt-2 border-t border-border mt-2">
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all">
-                      <LogOut className="w-5 h-5 shrink-0" />
-                      Sign Out
-                    </button>
-                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all"
+                  >
+                    <LogOut className="w-5 h-5 shrink-0" />
+                    Sign Out
+                  </button>
                 </div>
               </div>
             </motion.div>
