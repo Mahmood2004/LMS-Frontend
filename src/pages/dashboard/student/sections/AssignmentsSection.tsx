@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import StatusBadge from "../../shared/components/StatusBadge";
 import StarDisplay from "../../shared/components/StarDisplay";
-import { assignmentsData } from "../data/mockData";
+import { assignmentsData, courses } from "../data/mockData";
 import type { AssignmentStatus } from "../types";
 
 const AssignmentsSection = () => {
@@ -14,6 +14,7 @@ const AssignmentsSection = () => {
   const [activeTab, setActiveTab] = useState<"assignment" | "project">(
     "assignment",
   );
+  const [selectedCourseId, setSelectedCourseId] = useState<number>(0);
   const [attachedFiles, setAttachedFiles] = useState<
     Record<number, File | null>
   >({});
@@ -23,7 +24,20 @@ const AssignmentsSection = () => {
   const [submittedIds, setSubmittedIds] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const items = assignmentsData.filter((a) => a.type === activeTab);
+  const statusOrder: Record<string, number> = {
+    pending: 0,
+    submitted: 1,
+    graded: 2,
+  };
+
+  const filteredAssignments = assignmentsData
+    .filter((a) => a.type === activeTab)
+    .filter(
+      (a) =>
+        selectedCourseId === 0 ||
+        a.course === courses.find((c) => c.id === selectedCourseId)?.name,
+    )
+    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 
   const handleSubmit = (id: number) => {
     const file = attachedFiles[id];
@@ -39,16 +53,26 @@ const AssignmentsSection = () => {
       return;
     }
 
-    setSubmittedIds((prev) => [...prev, id]);
-    setSubmitting(null);
+    // Check if already submitted
+    const assignment = assignmentsData.find((a) => a.id === id);
+    if (!assignment) return;
+
+    const alreadySubmitted =
+      assignment.status === "submitted" || assignment.status === "graded";
+
+    assignment.status = "submitted";
+    assignment.fileName = file.name;
 
     setAttachedFiles((prev) => ({ ...prev, [id]: null }));
     setSubmitTexts((prev) => ({ ...prev, [id]: "" }));
+    setSubmitting(null);
 
     toast({
-      title: "Submitted!",
-      description: `Your file "${file.name}" has been submitted successfully.`,
-      duration: 2000,
+      title: alreadySubmitted ? "Submission Updated!" : "Submitted!",
+      description: alreadySubmitted
+        ? `Your updated file "${file.name}" has been submitted.`
+        : `Your file "${file.name}" has been submitted successfully.`,
+      duration: 3000,
     });
   };
 
@@ -61,21 +85,40 @@ const AssignmentsSection = () => {
         Submit your work and track your grades.
       </p>
 
-      {/* Tabs */}
-      <div className="mt-6 flex gap-2 p-1 bg-secondary rounded-xl w-fit">
-        {(["assignment", "project"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 sm:px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === tab
-                ? "bg-card text-foreground shadow-card"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        {/* Tabs */}
+        <div className="flex gap-2 p-1 bg-secondary rounded-xl w-fit">
+          {(["assignment", "project"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 sm:px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === tab
+                  ? "bg-card text-foreground shadow-card"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab === "assignment" ? "Assignments" : "Projects"}
+            </button>
+          ))}
+        </div>
+
+        {/* Course Dropdown */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-foreground">Course</label>
+          <select
+            value={selectedCourseId}
+            onChange={(e) => setSelectedCourseId(Number(e.target.value))}
+            className="mt-1 w-full text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {tab === "assignment" ? "Assignments" : "Projects"}
-          </button>
-        ))}
+            <option value={0}>All Courses</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Hidden file input for dropzone */}
@@ -96,13 +139,13 @@ const AssignmentsSection = () => {
       />
 
       <div className="mt-6 space-y-4">
-        {items.length === 0 && (
+        {filteredAssignments.length === 0 && (
           <div className="py-16 text-center text-muted-foreground">
             <ClipboardCheck className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p>Nothing here yet.</p>
           </div>
         )}
-        {items.map((a) => {
+        {filteredAssignments.map((a) => {
           const isLocallySubmitted = submittedIds.includes(a.id);
           const effectiveStatus: AssignmentStatus = isLocallySubmitted
             ? "submitted"
@@ -126,7 +169,7 @@ const AssignmentsSection = () => {
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <StatusBadge status={effectiveStatus} />
-                  {effectiveStatus === "pending" && (
+                  {effectiveStatus !== "graded" && (
                     <Button
                       size="sm"
                       variant="hero"
@@ -134,7 +177,9 @@ const AssignmentsSection = () => {
                         setSubmitting(submitting === a.id ? null : a.id)
                       }
                     >
-                      Submit
+                      {effectiveStatus === "submitted"
+                        ? "Edit Submission"
+                        : "Submit"}
                     </Button>
                   )}
                 </div>
@@ -182,12 +227,12 @@ const AssignmentsSection = () => {
                         }`}
                       >
                         <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-4" />
-                        {attachedFiles[a.id] ? (
+                        {attachedFiles[a.id] || a.fileName ? (
                           <>
                             <p className="text-sm font-medium text-foreground">
                               <span className="flex items-center gap-2 justify-center">
                                 <Paperclip className="w-6 h-6 text-muted-foreground" />
-                                {attachedFiles[a.id].name}
+                                {attachedFiles[a.id]?.name ?? a.fileName}
                               </span>
                             </p>
                             <p

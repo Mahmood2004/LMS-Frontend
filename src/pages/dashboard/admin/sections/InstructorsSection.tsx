@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Initials from "../../shared/components/Initials";
-import { instructorsData } from "../data/mockData"; // you'll create this similar to studentsData
+import { instructorsData } from "../data/mockData";
 
 const AdminInstructorsSection = () => {
   const { toast } = useToast();
@@ -165,12 +165,7 @@ const AdminInstructorsSection = () => {
                       </label>
                       <Input
                         value={selectedInstructor.username}
-                        onChange={(e) =>
-                          setSelectedInstructor({
-                            ...selectedInstructor,
-                            username: e.target.value,
-                          })
-                        }
+                        disabled
                         className="mt-1"
                       />
                     </div>

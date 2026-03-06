@@ -2,6 +2,7 @@ import { Brain, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { sidebarItems } from "./data/mockData";
+import { useAuth } from "@/context/AuthContext";
 
 interface InstructorLayoutProps {
   activeSection: string;
@@ -14,6 +15,7 @@ const InstructorLayout = ({
   onNavigate,
   children,
 }: InstructorLayoutProps) => {
+  const { logout } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
@@ -48,21 +50,18 @@ const InstructorLayout = ({
             </button>
           ))}
         </nav>
-        <Link to="/login">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 text-muted-foreground"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="w-full justify-start gap-3 text-muted-foreground"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </Button>
       </aside>
 
       {/* Main content */}
-      <main className="lg:ml-64 p-6 lg:p-10 max-w-5xl">
-        {children}
-      </main>
+      <main className="lg:ml-64 p-6 lg:p-10 max-w-5xl">{children}</main>
     </div>
   );
 };
