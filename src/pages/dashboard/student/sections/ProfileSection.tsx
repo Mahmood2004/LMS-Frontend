@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -8,21 +8,21 @@ import {
   Globe,
   CheckCircle2,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { PRESET_SKILLS } from "../data/skills";
+import profileService from "@/services/student/profileService";
+import skillService from "@/services/student/skillService";
 
 const ProfileSection = () => {
   const { toast } = useToast();
-  const [name, setName] = useState("Alex Rivera");
-  const [username] = useState("alex_rivera");
-  const [email, setEmail] = useState("student@edu.com");
-  const [bio, setBio] = useState(
-    "Computer Science student passionate about AI and distributed systems.",
-  );
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [bio, setBio] = useState("");
   const [cvFile, setCvFile] = useState<string | null>(null);
   const [linkedin, setLinkedin] = useState("");
   const [github, setGithub] = useState("");
@@ -31,6 +31,12 @@ const ProfileSection = () => {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillQuery, setSkillQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [linksSaving, setLinksSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [pendingSkills, setPendingSkills] = useState<string[]>([]);
 
   const validateUrl = (url: string, requiredDomain?: string) => {
     if (!url) return true;
@@ -69,23 +75,59 @@ const ProfileSection = () => {
     }
   };
 
-  const filteredSkills = PRESET_SKILLS.filter(
-    (skill) =>
-      skill.toLowerCase().includes(skillQuery.toLowerCase()) &&
-      !skills.includes(skill),
-  );
+  const addSkill = async (skill: string) => {
+    if (pendingSkills.includes(skill)) return;
 
-  const addSkill = (skill: string) => {
+    setPendingSkills((prev) => [...prev, skill]);
     setSkills((prev) => [...prev, skill]);
-    setSkillQuery("");
-    setShowSuggestions(false);
+
+    try {
+      await skillService.addSkillsToUser([skill]);
+      toast({
+        title: "Skill added",
+        description: `${skill} was added to your profile.`,
+        duration: 3000,
+      });
+    } catch {
+      setSkills((prev) => prev.filter((s) => s !== skill));
+      toast({
+        title: "Add failed",
+        description: `Could not add ${skill}.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setPendingSkills((prev) => prev.filter((s) => s !== skill));
+    }
   };
 
-  const removeSkill = (skill: string) => {
+  const removeSkill = async (skill: string) => {
+    if (pendingSkills.includes(skill)) return;
+
+    setPendingSkills((prev) => [...prev, skill]);
     setSkills((prev) => prev.filter((s) => s !== skill));
+
+    try {
+      await skillService.deleteSkillFromUser(skill);
+      toast({
+        title: "Skill removed",
+        description: `${skill} was removed from your profile.`,
+        duration: 3000,
+      });
+    } catch {
+      setSkills((prev) => [...prev, skill]);
+      toast({
+        title: "Delete failed",
+        description: `Could not remove ${skill}.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setPendingSkills((prev) => prev.filter((s) => s !== skill));
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateEmail(email)) {
       toast({
         title: "Invalid Email",
@@ -96,14 +138,35 @@ const ProfileSection = () => {
       return;
     }
 
-    toast({
-      title: "Profile saved!",
-      description: "Your changes have been updated.",
-      duration: 3000,
-    });
+    try {
+      setSaving(true);
+      await profileService.updateProfile({
+        full_name: name,
+        bio,
+        linkedin_url: linkedin,
+        github_url: github,
+        portfolio_url: portfolio,
+        email,
+      });
+
+      toast({
+        title: "Profile saved!",
+        description: "Your changes have been updated.",
+        duration: 3000,
+      });
+    } catch {
+      toast({
+        title: "Update failed",
+        description: "Could not update profile.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSaveLinks = () => {
+  const handleSaveLinks = async () => {
     const invalidLinks: string[] = [];
 
     if (!validateUrl(linkedin, "linkedin.com")) invalidLinks.push("LinkedIn");
@@ -122,27 +185,133 @@ const ProfileSection = () => {
       return;
     }
 
-    toast({
-      title: "Profile saved!",
-      description: "Your changes have been updated.",
-      duration: 3000,
-    });
+    try {
+      setLinksSaving(true);
+      await profileService.updateProfile({
+        linkedin_url: linkedin,
+        github_url: github,
+        portfolio_url: portfolio,
+      });
+
+      toast({
+        title: "Profile saved!",
+        description: "Your changes have been updated.",
+        duration: 3000,
+      });
+    } catch {
+      toast({
+        title: "Update failed",
+        description: "Could not update profile.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setLinksSaving(false);
+    }
   };
 
-  const handleCvDrop = (e: React.DragEvent) => {
+  const handleCvDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) setCvFile(file.name);
+    if (file) {
+      try {
+        await profileService.uploadCV(file);
+        setCvFile(file.name);
+
+        toast({
+          title: "CV uploaded",
+          description: "Your CV was uploaded successfully.",
+          duration: 3000,
+        });
+      } catch {
+        toast({
+          title: "Upload failed",
+          description: "Could not upload CV.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+    }
   };
 
   const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+    ? name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "ST";
 
+  useEffect(() => {
+    const fetchAllSkills = async () => {
+      try {
+        const skillsFromServer = await skillService.getAllSkills();
+        setAllSkills(skillsFromServer.map((s) => s.name));
+      } catch {
+        setAllSkills([]);
+      }
+    };
+    fetchAllSkills();
+  }, []);
+
+  const filteredSkills = allSkills.filter(
+    (skill) =>
+      skill.toLowerCase().includes(skillQuery.toLowerCase()) &&
+      !skills.includes(skill),
+  );
+
+  useEffect(() => {
+    const fetchProfileAndSkills = async () => {
+      try {
+        const profile = await profileService.getProfile();
+
+        setName(profile.full_name ?? "");
+        setUsername(profile.username ?? "");
+        setEmail(profile.email ?? "");
+        setBio(profile.bio ?? "");
+
+        setLinkedin(profile.linkedin_url ?? "");
+        setGithub(profile.github_url ?? "");
+        setPortfolio(profile.portfolio_url ?? "");
+
+        if (profile.cv_url) {
+          const filename = profile.cv_url.split("/").pop();
+          setCvFile(filename ?? "cv.pdf");
+        }
+
+        // Fetch user skills
+        try {
+          const userSkills = await skillService.getUserSkills();
+          setSkills(userSkills.skills);
+        } catch {
+          setSkills([]);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        toast({
+          title: "Failed to load profile",
+          description: "Could not fetch your profile data.",
+          variant: "destructive",
+          duration: 3000,
+        });
+
+        setLoading(false);
+      }
+    };
+
+    fetchProfileAndSkills();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="fl   items-center justify-center h-64">
+        Loading profile...
+      </div>
+    );
+  }
   return (
     <>
       <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
@@ -163,7 +332,7 @@ const ProfileSection = () => {
               <h3 className="font-semibold text-foreground text-lg truncate">
                 {name}
               </h3>
-              <p className="text-sm text-muted-foreground">student@edu.com</p>
+              <p className="text-sm text-muted-foreground">{email}</p>
             </div>
           </div>
           <div>
@@ -226,7 +395,8 @@ const ProfileSection = () => {
                   {skill}
                   <button
                     onClick={() => removeSkill(skill)}
-                    className="text-xs hover:text-red-500"
+                    disabled={pendingSkills.includes(skill)}
+                    className={`text-xs ${pendingSkills.includes(skill) ? "text-gray-400 cursor-not-allowed" : "hover:text-red-500"}`}
                   >
                     ✕
                   </button>
@@ -253,8 +423,14 @@ const ProfileSection = () => {
                   {filteredSkills.map((skill) => (
                     <div
                       key={skill}
-                      onClick={() => addSkill(skill)}
-                      className="px-4 py-2 text-sm hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() =>
+                        !pendingSkills.includes(skill) && addSkill(skill)
+                      }
+                      className={`px-4 py-2 text-sm hover:bg-accent cursor-pointer transition-colors ${
+                        pendingSkills.includes(skill)
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                     >
                       {skill}
                     </div>
@@ -263,8 +439,9 @@ const ProfileSection = () => {
               )}
             </div>
           </div>
-          <Button variant="hero" onClick={handleSave}>
-            Save Changes
+          <Button variant="hero" onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {saving ? "Saving changes..." : "Save Changes"}
           </Button>
         </div>
 
@@ -291,17 +468,35 @@ const ProfileSection = () => {
                 <p className="text-sm font-medium text-foreground truncate">
                   {cvFile}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Uploaded Successfully
-                </p>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCvFile(null)}
+                disabled={uploading}
+                onClick={async () => {
+                  try {
+                    setUploading(true); // show "Removing..."
+                    await profileService.deleteCV();
+                    setCvFile(null);
+                    setUploading(false);
+
+                    toast({
+                      title: "CV removed",
+                      description: "Your CV has been deleted.",
+                      duration: 3000,
+                    });
+                  } catch {
+                    setUploading(false);
+                    toast({
+                      title: "Delete failed",
+                      variant: "destructive",
+                      duration: 3000,
+                    });
+                  }
+                }}
                 className="shrink-0 text-muted-foreground"
               >
-                Remove
+                {uploading ? "Removing..." : "Remove"}
               </Button>
             </motion.div>
           ) : (
@@ -316,10 +511,33 @@ const ProfileSection = () => {
                 const el = document.createElement("input");
                 el.type = "file";
                 el.accept = ".pdf";
-                el.onchange = (ev) => {
+
+                el.onchange = async (ev) => {
                   const f = (ev.target as HTMLInputElement).files?.[0];
-                  if (f) setCvFile(f.name);
+                  if (f) {
+                    try {
+                      setUploading(true);
+                      await profileService.uploadCV(f);
+                      setCvFile(f.name);
+                      setUploading(false);
+
+                      toast({
+                        title: "CV uploaded",
+                        description: "Your CV was uploaded successfully.",
+                        duration: 3000,
+                      });
+                    } catch {
+                      setUploading(false);
+                      toast({
+                        title: "Upload failed",
+                        description: "Could not upload CV.",
+                        variant: "destructive",
+                        duration: 3000,
+                      });
+                    }
+                  }
                 };
+
                 el.click();
               }}
               className={`border-2 border-dashed rounded-xl p-8 sm:p-10 text-center cursor-pointer transition-colors ${
@@ -416,8 +634,13 @@ const ProfileSection = () => {
             </div>
           </div>
           <div className="flex justify-end pt-4 ">
-            <Button variant="hero" onClick={handleSaveLinks}>
-              Save Changes
+            <Button
+              variant="hero"
+              onClick={handleSaveLinks}
+              disabled={linksSaving}
+            >
+              {linksSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {linksSaving ? "Saving changes..." : "Save Changes"}
             </Button>
           </div>
         </div>
