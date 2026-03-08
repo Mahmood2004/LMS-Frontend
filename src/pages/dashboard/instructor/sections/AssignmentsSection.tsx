@@ -15,6 +15,7 @@ import {
   assignmentsData,
 } from "../data/mockData";
 import type { Submission, FeedbackEntry } from "../types";
+import assignmentServices from "@/services/instructor/assignmentServices";
 
 interface AssignmentsSectionProps {
   preselectedCourseId?: number;
