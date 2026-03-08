@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -10,12 +10,14 @@ import {
   Film,
   FileText,
   Search,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { coursesData } from "../data/mockData";
+import InstructorCourseServices from "@/services/instructor/courseServices";
 
 interface CourseContent {
   id: number;
@@ -38,7 +40,7 @@ interface ExtendedCourse {
 interface CoursesSectionProps {
   onQuickAction?: (
     section: string,
-    options?: { courseId?: number; assignmentType?: "assignment" | "project" },
+    options?: { courseId?: number; assignmentType?: "assignment" | "project" }
   ) => void;
 }
 
@@ -62,7 +64,10 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
     file?: File;
   }>({ title: "", type: "pdf" });
 
-  const [courses, setCourses] = useState<ExtendedCourse[]>(coursesData);
+  const [courses, setCourses] = useState<ExtendedCourse[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
 
   const handleAddContent = (courseId: number) => {
     if (!newContent.title) {
@@ -101,8 +106,8 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
                 ...course.content,
               ],
             }
-          : course,
-      ),
+          : course
+      )
     );
 
     setNewContent({ title: "", type: "pdf", file: undefined });
@@ -121,40 +126,122 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
       prev.map((c) =>
         c.id === courseId
           ? { ...c, content: c.content.filter((item) => item.id !== contentId) }
-          : c,
-      ),
+          : c
+      )
     );
   };
 
-  const handleCreate = () => {
-    if (!form.name || !form.description || !form.startDate || !form.endDate) {
+  const handleCreate = async () => {
+    // Only title and description are required
+    // startDate and endDate are UI-only — backend uses the active cohort dates
+    if (!form.name || !form.description) {
       toast({
         title: "Missing information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in the course name and description.",
         variant: "destructive",
+        duration: 3000,
       });
       return;
     }
-    setCourses((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: form.name,
-        students: 0,
-        pendingGrades: 0,
+
+    try {
+      setCreating(true);
+
+      // Send only title and description to the backend
+      // Backend handles cohort assignment and student enrollment automatically
+      const newCourse = await InstructorCourseServices.createCourse({
+        title: form.name,
         description: form.description,
-        content: [],
-        createdAt: Date.now(),
-      },
-    ]);
-    setForm({ name: "", description: "", startDate: "", endDate: "" });
-    setShowForm(false);
-    toast({
-      title: "Course created!",
-      description: `"${form.name}" is now live.`,
-    });
+      });
+
+      // Add the returned course to local state immediately
+      setCourses((prev) => [
+        {
+          id: newCourse.id as unknown as number,
+          name: newCourse.title,
+          description: newCourse.description ?? "",
+          students: 0,
+          pendingGrades: 0,
+          content: [],
+          createdAt: Date.now(),
+        },
+        ...prev,
+      ]);
+
+      setForm({ name: "", description: "", startDate: "", endDate: "" });
+      setShowForm(false);
+
+      toast({
+        title: "Course created!",
+        description: `"${form.name}" is now live.`,
+        duration: 3000,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Failed to create course",
+        description: err.response?.data?.message ?? "Something went wrong.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setCreating(false);
+    }
   };
 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+  
+      try {
+        const data = await InstructorCourseServices.getCourses();
+  
+        const enriched = await Promise.all(
+          data.map(async (c) => {
+            const [students, pendingGrades] = await Promise.all([
+              InstructorCourseServices.getStudentCount(c.id).catch(() => 0),
+              InstructorCourseServices.getPendingCount(c.id).catch(() => 0),
+            ]);
+  
+            return {
+              id: c.id as unknown as number,
+              name: c.title,
+              description: c.description ?? "",
+              students,
+              pendingGrades,
+              content: [],
+              createdAt: new Date(c.created_at).getTime(),
+            };
+          })
+        );
+  
+        setCourses(enriched);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          setCourses([]);
+        } else {
+          toast({
+            title: "Failed to load courses",
+            description: err.response?.data?.message ?? "Something went wrong.",
+            variant: "destructive",
+            duration: 3000,
+          });
+        }
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+  
+    fetchCourses();
+  }, []);
+
+  if (loadingCourses) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading courses...</span>
+      </div>
+    );
+  }
   return (
     <>
       <div className="flex items-center justify-between">
@@ -284,8 +371,15 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
                 <Button variant="ghost" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
-                <Button variant="hero" onClick={handleCreate}>
-                  Create Course
+                <Button
+                  variant="hero"
+                  onClick={handleCreate}
+                  disabled={creating}
+                >
+                  {creating && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {creating ? "Creating..." : "Create Course"}
                 </Button>
               </div>
             </div>
@@ -297,7 +391,7 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
       <div className="mt-6 space-y-4">
         {[...courses]
           .filter((course) =>
-            course.name.toLowerCase().includes(search.toLowerCase()),
+            course.name.toLowerCase().includes(search.toLowerCase())
           )
           .sort((a, b) => b.createdAt - a.createdAt)
           .map((course) => (
@@ -466,7 +560,7 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
                               setAddingContentCourseId(
                                 addingContentCourseId === course.id
                                   ? null
-                                  : course.id,
+                                  : course.id
                               )
                             }
                           >
@@ -491,7 +585,7 @@ const CoursesSection = ({ onQuickAction }: CoursesSectionProps) => {
                           >
                             {action.label}
                           </Button>
-                        ),
+                        )
                       )}
                     </div>
                   </motion.div>
