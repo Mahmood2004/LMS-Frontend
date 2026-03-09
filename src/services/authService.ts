@@ -1,7 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const API_BASE = "/auth";
+const API_BASE = "/api/auth";
 
 interface LoginResponse {
   message: string;
