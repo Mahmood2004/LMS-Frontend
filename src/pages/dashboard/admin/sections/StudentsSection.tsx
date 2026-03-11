@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BookOpen,
   Search,
   X,
   Linkedin,
@@ -9,26 +8,43 @@ import {
   Globe,
   CheckCircle2,
   XCircle,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { studentsData } from "../data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import Initials from "../../shared/components/Initials";
+import studentService, {
+  Student,
+  StudentProfile,
+} from "@/services/admin/studentService";
 
 const AdminStudentsSection = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<
-    (typeof studentsData)[0] | null
-  >(null);
-
-  const filtered = studentsData.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()),
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(
+    null,
   );
 
-  const handleSave = () => {
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const filtered = students
+    .filter((s) =>
+      (s.full_name || s.username).toLowerCase().includes(search.toLowerCase()),
+    )
+    .sort((a, b) =>
+      (a.full_name || a.username).localeCompare(
+        b.full_name || b.username,
+        undefined,
+        { sensitivity: "base" },
+      ),
+    );
+
+  const handleSave = async () => {
     if (!selectedStudent) return;
 
     // Email validation
@@ -37,30 +53,32 @@ const AdminStudentsSection = () => {
         title: "Cannot save profile",
         description: "Please enter a valid email address.",
         variant: "destructive",
-        duration: 3000,
+        duration: 2000,
       });
       return;
     }
 
+    // Link validation
     const invalidLinks: string[] = [];
 
     if (
-      selectedStudent.linkedin &&
-      getValidationState(selectedStudent.linkedin, "linkedin.com") === "invalid"
+      selectedStudent.linkedin_url &&
+      getValidationState(selectedStudent.linkedin_url, "linkedin.com") ===
+        "invalid"
     ) {
       invalidLinks.push("LinkedIn");
     }
 
     if (
-      selectedStudent.github &&
-      getValidationState(selectedStudent.github, "github.com") === "invalid"
+      selectedStudent.github_url &&
+      getValidationState(selectedStudent.github_url, "github.com") === "invalid"
     ) {
       invalidLinks.push("GitHub");
     }
 
     if (
-      selectedStudent.portfolio &&
-      getValidationState(selectedStudent.portfolio) === "invalid"
+      selectedStudent.portfolio_url &&
+      getValidationState(selectedStudent.portfolio_url) === "invalid"
     ) {
       invalidLinks.push("Portfolio");
     }
@@ -68,34 +86,55 @@ const AdminStudentsSection = () => {
     if (invalidLinks.length > 0) {
       toast({
         title: "Cannot save profile",
-        description: `Please fix the following links: ${invalidLinks.join(
-          ", ",
-        )}.`,
+        description: `Please fix the following links: ${invalidLinks.join(", ")}`,
         variant: "destructive",
-        duration: 3000,
+        duration: 2000,
       });
       return;
     }
 
-    // Everything valid
-    toast({
-      title: "Student saved!",
-      description: "Changes have been updated.",
-      duration: 3000,
-    });
+    setSaving(true);
 
-    setSelectedStudent(null);
-  };
+    try {
+      await studentService.updateById(selectedStudent.id, {
+        fullName: selectedStudent.full_name || undefined,
+        bio: selectedStudent.bio || undefined,
+        email: selectedStudent.email,
+        linkedin_url: selectedStudent.linkedin_url || undefined,
+        github_url: selectedStudent.github_url || undefined,
+        portfolio_url: selectedStudent.portfolio_url || undefined,
+      });
 
-  const handleCvUpload = (file: File) => {
-    if (!selectedStudent) return;
+      // update table immediately
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === selectedStudent.id
+            ? {
+                ...s,
+                full_name: selectedStudent.full_name,
+                email: selectedStudent.email,
+              }
+            : s,
+        ),
+      );
 
-    const updatedStudent = {
-      ...selectedStudent,
-      cvUrl: URL.createObjectURL(file),
-    };
+      toast({
+        title: "Student saved!",
+        description: "Changes have been updated.",
+        duration: 3000,
+      });
 
-    setSelectedStudent(updatedStudent);
+      setSelectedStudent(null);
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to update student",
+        variant: "destructive",
+        duration: 2000,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const validateEmail = (value: string) => {
@@ -118,6 +157,27 @@ const AdminStudentsSection = () => {
       return "invalid";
     }
   };
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+
+      try {
+        const data = await studentService.getAll();
+        setStudents(data);
+      } catch {
+        toast({
+          title: "Error",
+          description: "Failed to load students",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
   return (
     <>
@@ -148,33 +208,58 @@ const AdminStudentsSection = () => {
           ))}
         </div>
 
-        {filtered.map((s, i) => (
-          <motion.div
-            key={s.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: i * 0.04 }}
-            className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 items-center px-5 py-4 border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Initials name={s.name} />
-              <span className="text-sm font-medium text-foreground">
-                {s.name}
-              </span>
-            </div>
-            <span className="text-sm text-muted-foreground">{s.email}</span>
-            <span className="text-sm text-muted-foreground">
-              {s.courses.length}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setSelectedStudent(s)}
+        {loadingStudents ? (
+          <div className="mt-8 mb-8 text-center text-muted-foreground">
+            Loading students...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="mt-8 mb-8 text-center text-muted-foreground">
+            No students found.
+          </div>
+        ) : (
+          filtered.map((s, i) => (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.04 }}
+              className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 items-center px-5 py-4 border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
             >
-              View / Edit
-            </Button>
-          </motion.div>
-        ))}
+              <div className="flex items-center gap-2">
+                <Initials name={s.full_name || s.username} />
+                <span className="text-sm font-medium text-foreground">
+                  {s.full_name || s.username}
+                </span>
+              </div>
+              <span className="text-sm text-muted-foreground">{s.email}</span>
+              <span className="text-sm text-muted-foreground">
+                {s.courses_count}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  setLoadingProfile(true);
+
+                  try {
+                    const profile = await studentService.getById(s.id);
+                    setSelectedStudent(profile);
+                  } catch {
+                    toast({
+                      title: "Error",
+                      description: "Failed to load student profile",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setLoadingProfile(false);
+                  }
+                }}
+              >
+                View / Edit
+              </Button>
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Side panel */}
@@ -212,11 +297,17 @@ const AdminStudentsSection = () => {
                 {/* Basic info */}
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-hero-gradient flex items-center justify-center text-primary-foreground font-bold text-xl">
-                    {selectedStudent.name
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()}
+                    {selectedStudent.full_name
+                      ? selectedStudent.full_name
+                          .split(" ")
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase()
+                      : selectedStudent.username
+                          .split(" ")
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase()}
                   </div>
                   <div className="flex-1 space-y-3">
                     <div>
@@ -224,11 +315,11 @@ const AdminStudentsSection = () => {
                         Name
                       </label>
                       <Input
-                        value={selectedStudent.name}
+                        value={selectedStudent.full_name || ""}
                         onChange={(e) =>
                           setSelectedStudent({
                             ...selectedStudent,
-                            name: e.target.value,
+                            full_name: e.target.value,
                           })
                         }
                         className="mt-1"
@@ -316,41 +407,21 @@ const AdminStudentsSection = () => {
                     CV
                   </h4>
 
-                  {selectedStudent.cvUrl ? (
+                  {selectedStudent.cv_url ? (
                     <a
-                      href={selectedStudent.cvUrl}
-                      download
+                      href={selectedStudent.cv_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      Download CV
+                      <Eye className="w-4 h-4" />
+                      View CV
                     </a>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       No CV uploaded.
                     </p>
                   )}
-
-                  {/* Hidden file input */}
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    id="cv-upload"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleCvUpload(file);
-                    }}
-                  />
-
-                  {/* Upload button */}
-                  <div className="mt-3">
-                    <label htmlFor="cv-upload">
-                      <span className="inline-flex items-center gap-2 cursor-pointer text-sm px-4 py-2 rounded-lg border border-border bg-secondary hover:bg-accent transition-colors">
-                        Upload New CV
-                      </span>
-                    </label>
-                  </div>
                 </div>
 
                 {/* Links */}
@@ -367,24 +438,24 @@ const AdminStudentsSection = () => {
                       <Input
                         className="pl-9 pr-9"
                         placeholder="https://linkedin.com/in/username"
-                        value={selectedStudent.linkedin}
+                        value={selectedStudent.linkedin_url}
                         onChange={(e) =>
                           setSelectedStudent({
                             ...selectedStudent,
-                            linkedin: e.target.value,
+                            linkedin_url: e.target.value,
                           })
                         }
                       />
 
                       {getValidationState(
-                        selectedStudent.linkedin ?? "",
+                        selectedStudent.linkedin_url ?? "",
                         "linkedin.com",
                       ) === "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
 
                       {getValidationState(
-                        selectedStudent.linkedin ?? "",
+                        selectedStudent.linkedin_url ?? "",
                         "linkedin.com",
                       ) === "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
@@ -404,23 +475,23 @@ const AdminStudentsSection = () => {
                       <Input
                         className="pl-9 pr-9"
                         placeholder="https://github.com/username"
-                        value={selectedStudent.github}
+                        value={selectedStudent.github_url}
                         onChange={(e) =>
                           setSelectedStudent({
                             ...selectedStudent,
-                            github: e.target.value,
+                            github_url: e.target.value,
                           })
                         }
                       />
 
                       {getValidationState(
-                        selectedStudent.github ?? "",
+                        selectedStudent.github_url ?? "",
                         "github.com",
                       ) === "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
                       {getValidationState(
-                        selectedStudent.github ?? "",
+                        selectedStudent.github_url ?? "",
                         "github.com",
                       ) === "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
@@ -440,30 +511,32 @@ const AdminStudentsSection = () => {
                       <Input
                         className="pl-9 pr-9"
                         placeholder="https://yourportfolio.com"
-                        value={selectedStudent.portfolio}
+                        value={selectedStudent.portfolio_url}
                         onChange={(e) =>
                           setSelectedStudent({
                             ...selectedStudent,
-                            portfolio: e.target.value,
+                            portfolio_url: e.target.value,
                           })
                         }
                       />
 
                       {/* Portfolio */}
-                      {getValidationState(selectedStudent.portfolio ?? "") ===
-                        "valid" && (
+                      {getValidationState(
+                        selectedStudent.portfolio_url ?? "",
+                      ) === "valid" && (
                         <CheckCircle2 className="absolute right-3 top-3 w-4 h-4 text-green-500" />
                       )}
-                      {getValidationState(selectedStudent.portfolio ?? "") ===
-                        "invalid" && (
+                      {getValidationState(
+                        selectedStudent.portfolio_url ?? "",
+                      ) === "invalid" && (
                         <XCircle className="absolute right-3 top-3 w-4 h-4 text-red-500" />
                       )}
                     </div>
                   </div>
                 </div>
 
-                <Button variant="hero" onClick={handleSave}>
-                  Save Changes
+                <Button variant="hero" onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </motion.div>

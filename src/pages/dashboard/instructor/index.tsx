@@ -8,6 +8,7 @@ import FeedbackSection from "./sections/FeedbackSection";
 import StudentsSection from "./sections/StudentsSection";
 import SkillsSection from "./sections/SkillsSection";
 import ProfileSection from "./sections/ProfileSection";
+import AnnouncementSection from "./sections/AnnouncementSection";
 import { useParams, useNavigate as useRouterNavigate } from "react-router-dom";
 
 const InstructorDashboard = () => {
@@ -20,6 +21,7 @@ const InstructorDashboard = () => {
     "assignments",
     "feedback",
     "students",
+    "announcements",
     "skills",
     "profile",
   ] as const;
@@ -69,12 +71,14 @@ const InstructorDashboard = () => {
           <AssignmentsSection
             preselectedCourseId={preselectedCourseId}
             preselectedType={preselectedAssignmentType}
-          />
+          /> 
         );
       case "feedback":
         return <FeedbackSection />;
       case "students":
         return <StudentsSection />;
+      case "announcements":
+        return <AnnouncementSection />;
       case "skills":
         return <SkillsSection />;
       case "profile":

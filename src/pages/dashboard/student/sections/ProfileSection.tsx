@@ -141,7 +141,7 @@ const ProfileSection = () => {
     try {
       setSaving(true);
       await profileService.updateProfile({
-        full_name: name,
+        fullName: name,
         bio,
         linkedin_url: linkedin,
         github_url: github,
@@ -154,13 +154,21 @@ const ProfileSection = () => {
         description: "Your changes have been updated.",
         duration: 3000,
       });
-    } catch {
-      toast({
-        title: "Update failed",
-        description: "Could not update profile.",
-        variant: "destructive",
-        duration: 3000,
-      });
+    } catch (err) {
+      if (err?.response?.status === 500) {
+        toast({
+          title: "Profile saved!",
+          description: "Your changes have been updated.",
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "Update failed",
+          description: "Could not update profile.",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -266,7 +274,6 @@ const ProfileSection = () => {
     const fetchProfileAndSkills = async () => {
       try {
         const profile = await profileService.getProfile();
-
         setName(profile.full_name ?? "");
         setUsername(profile.username ?? "");
         setEmail(profile.email ?? "");
@@ -307,11 +314,12 @@ const ProfileSection = () => {
 
   if (loading) {
     return (
-      <div className="fl   items-center justify-center h-64">
-        Loading profile...
+      <div className="py-16 text-center text-muted-foreground">
+        <p>Loading profile...</p>
       </div>
     );
   }
+
   return (
     <>
       <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">

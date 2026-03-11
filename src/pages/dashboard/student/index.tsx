@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import StudentLayout from "./layout";
 import DashboardSection from "./sections/DashboardSection";
@@ -7,7 +7,10 @@ import AssignmentsSection from "./sections/AssignmentsSection";
 import AssistantSection from "./sections/AssistantSection";
 import NotificationsSection from "./sections/NotificationsSection";
 import ProfileSection from "./sections/ProfileSection";
-import { notificationsData as initialNotifications } from "./data/mockData";
+import StudentNotificationServices, {
+  GetNotificationsResponse,
+  Notification,
+} from "@/services/student/notificationService";
 import { useParams, useNavigate as useRouterNavigate } from "react-router-dom";
 
 const StudentDashboard = () => {
@@ -32,7 +35,23 @@ const StudentDashboard = () => {
     : "dashboard";
 
   const [activeSection, setActiveSection] = useState<Section>(initialSection);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const response: GetNotificationsResponse =
+          await StudentNotificationServices.getMyNotifications();
+        setNotifications(response.notifications);
+        setUnreadCount(response.unreadCount);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    }
+
+    fetchNotifications();
+  }, []);
 
   const handleNavigate = (section: Section) => {
     setActiveSection(section);
@@ -52,8 +71,7 @@ const StudentDashboard = () => {
       case "notifications":
         return (
           <NotificationsSection
-            notifications={notifications}
-            setNotifications={setNotifications}
+           
           />
         );
       case "profile":
@@ -67,8 +85,7 @@ const StudentDashboard = () => {
     <StudentLayout
       activeSection={activeSection}
       onNavigate={handleNavigate}
-      notifications={notifications}
-      setNotifications={setNotifications}
+      unreadCount={unreadCount}
     >
       <AnimatePresence mode="wait">
         <motion.div

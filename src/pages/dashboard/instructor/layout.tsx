@@ -1,7 +1,7 @@
 import { Brain, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { sidebarItems } from "./data/mockData";
+import { instructorSidebarItems } from "../shared/data/data";
 import { useAuth } from "@/context/AuthContext";
 
 interface InstructorLayoutProps {
@@ -35,7 +35,7 @@ const InstructorLayout = ({
           <p className="text-xs text-muted-foreground">Dr. Sarah Chen</p>
         </div>
         <nav className="flex-1 space-y-1">
-          {sidebarItems.map((item) => (
+          {instructorSidebarItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}

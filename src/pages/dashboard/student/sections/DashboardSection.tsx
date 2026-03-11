@@ -1,18 +1,115 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Calendar, ClipboardCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import studentProfileService from "@/services/student/profileService";
-import { stats, courses, notificationsData } from "../data/mockData";
+import courseService from "@/services/student/courseService";
+import assignmentService from "@/services/student/assignmentService";
+import StudentNotificationServices, {
+  GetNotificationsResponse,
+  Notification,
+} from "@/services/student/notificationService";
 
 interface DashboardSectionProps {
   onNavigate: (section: string) => void;
 }
 
 const DashboardSection = ({ onNavigate }: DashboardSectionProps) => {
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["studentProfile"],
-    queryFn: studentProfileService.getProfile,
-  });
+  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [pendingAssignments, setPendingAssignments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const profileData = await studentProfileService.getProfile();
+        const coursesData = await courseService.getMyCourses();
+        const attendanceData = await courseService.getMyAttendance();
+        const assignmentsData = await assignmentService.getPendingAssignments();
+
+        setProfile(profileData);
+        setCourses(coursesData);
+        setAttendance(attendanceData);
+        setPendingAssignments(assignmentsData);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    async function fetchNotifications() {
+      try {
+        const res: GetNotificationsResponse =
+          await StudentNotificationServices.getMyNotifications();
+        setNotifications(res.notifications);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    }
+
+    fetchNotifications();
+  }, []);
+
+  const totalCourses = courses.length;
+  const latestCourses = [...courses]
+    .sort(
+      (a, b) =>
+        new Date(b.enrolled_at).getTime() - new Date(a.enrolled_at).getTime(),
+    )
+    .slice(0, 3);
+  const avgAttendance =
+    attendance.length === 0
+      ? 0
+      : Math.round(
+          attendance.reduce(
+            (sum, course) => sum + course.attendance_percentage,
+            0,
+          ) / attendance.length,
+        );
+
+  const pendingAssignmentsCount = pendingAssignments.reduce((total, course) => {
+    const notOverdue = course.pending_assignments.filter(
+      (a: any) => !a.due_date || new Date(a.due_date) >= new Date(),
+    );
+    return total + notOverdue.length;
+  }, 0);
+
+  const stats = [
+    {
+      label: "Enrolled Courses",
+      value: totalCourses,
+      icon: BookOpen,
+      color: "text-primary",
+    },
+    {
+      label: "Attendance",
+      value: `${avgAttendance}%`,
+      icon: Calendar,
+      color: "text-muted-foreground",
+    },
+    {
+      label: "Assignments Pending",
+      value: pendingAssignmentsCount,
+      icon: ClipboardCheck,
+      color: "text-primary",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -20,7 +117,7 @@ const DashboardSection = ({ onNavigate }: DashboardSectionProps) => {
         <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
           Welcome back,{" "}
           <span className="text-gradient">
-            {isLoading ? "..." : profile?.full_name || "Student"}
+            {loading ? "..." : profile?.full_name || "Student"}
           </span>{" "}
           👋
         </h1>
@@ -61,9 +158,9 @@ const DashboardSection = ({ onNavigate }: DashboardSectionProps) => {
           </button>
         </div>
         <div className="space-y-3">
-          {courses.map((course, i) => (
+          {latestCourses.map((course, i) => (
             <motion.div
-              key={course.id}
+              key={course.courses.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 + i * 0.06 }}
@@ -75,10 +172,10 @@ const DashboardSection = ({ onNavigate }: DashboardSectionProps) => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-foreground text-sm sm:text-base truncate">
-                  {course.name}
+                  {course.courses.title}
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {course.instructor}
+                  {course.courses.users?.profiles?.full_name || "Instructor"}
                 </div>
               </div>
             </motion.div>
@@ -98,20 +195,35 @@ const DashboardSection = ({ onNavigate }: DashboardSectionProps) => {
           </button>
         </div>
         <div className="space-y-2">
-          {notificationsData.slice(0, 3).map((n) => (
-            <div
-              key={n.id}
-              className="p-4 rounded-lg bg-card border border-border flex items-start gap-3"
-            >
+          {notifications
+            .sort(
+              (a, b) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime(),
+            )
+            .slice(0, 3)
+            .map((n) => (
               <div
-                className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? "bg-primary" : "bg-muted-foreground/30"}`}
-              />
-              <div>
-                <p className="text-sm font-medium text-foreground">{n.title}</p>
-                <p className="text-xs text-muted-foreground">{n.time}</p>
+                key={n.id}
+                className="p-4 rounded-lg bg-card border border-border flex items-start gap-3"
+              >
+                <div
+                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.is_read ? "bg-primary" : "bg-muted-foreground/30"}`}
+                />
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {n.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(n.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </>

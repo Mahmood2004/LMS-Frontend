@@ -1,20 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Search, X } from "lucide-react";
+import { BookOpen, Eye, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Initials from "../../shared/components/Initials";
-import { studentsData } from "../data/mockData";
+import InstructorCourseServices, {
+  InstructorStudent,
+  CourseTitle,
+} from "@/services/instructor/courseService";
 
 const StudentsSection = () => {
   const [search, setSearch] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<
-    (typeof studentsData)[0] | null
-  >(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<InstructorStudent | null>(null);
+  const [students, setStudents] = useState<InstructorStudent[]>([]);
+  const [courses, setCourses] = useState<CourseTitle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAllCourses, setShowAllCourses] = useState(false);
 
-  const filtered = studentsData.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        const data = await InstructorCourseServices.getStudentsByInstructor();
+
+        setStudents(data.formattedStudents);
+        setCourses(data.coursesTitles);
+      } catch (err) {
+        console.error("Failed to fetch students:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  const filteredStudents = students
+    .filter((s) =>
+      (s.full_name ?? s.username).toLowerCase().includes(search.toLowerCase()),
+    )
+    .sort((a, b) =>
+      (a.full_name ?? a.username).localeCompare(b.full_name ?? b.username),
+    );
 
   return (
     <>
@@ -26,7 +54,7 @@ const StudentsSection = () => {
       </p>
 
       <div className="mt-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -46,34 +74,44 @@ const StudentsSection = () => {
             </span>
           ))}
         </div>
-        {filtered.map((s, i) => (
-          <motion.div
-            key={s.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: i * 0.04 }}
-            className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 items-center px-5 py-4 border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Initials name={s.name} />
-              <span className="text-sm font-medium text-foreground">
-                {s.name}
-              </span>
-            </div>
-            <span className="text-sm text-muted-foreground">{s.email}</span>
-            <span className="text-sm text-muted-foreground">
-              {s.courses.length}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-foreground"
-              onClick={() => setSelectedStudent(s)}
+        {loading ? (
+          <div className="mt-8 mb-8 text-center text-muted-foreground">
+            Loading students...
+          </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="mt-8 mb-8 text-center text-muted-foreground">
+            No students found.
+          </div>
+        ) : (
+          filteredStudents.map((s, i) => (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.04 }}
+              className="grid grid-cols-[2fr_2fr_1fr_auto] gap-4 items-center px-5 py-4 border-b border-border last:border-0 hover:bg-accent/20 transition-colors"
             >
-              View Profile
-            </Button>
-          </motion.div>
-        ))}
+              <div className="flex items-center gap-2">
+                <Initials name={s.full_name ?? s.username} />
+                <span className="text-sm font-medium text-foreground">
+                  {s.full_name ?? s.username}
+                </span>
+              </div>
+              <span className="text-sm text-muted-foreground">{s.email}</span>
+              <span className="text-sm text-muted-foreground">
+                {courses.length}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-foreground"
+                onClick={() => setSelectedStudent(s)}
+              >
+                View Profile
+              </Button>
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Side panel */}
@@ -108,15 +146,16 @@ const StudentsSection = () => {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-hero-gradient flex items-center justify-center text-primary-foreground font-bold text-xl">
-                    {selectedStudent.name
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")
-                      .toUpperCase()}
+                    {selectedStudent.full_name ??
+                      selectedStudent.username
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .toUpperCase()}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold font-display text-foreground">
-                      {selectedStudent.name}
+                      {selectedStudent.full_name ?? selectedStudent.username}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {selectedStudent.email}
@@ -127,38 +166,44 @@ const StudentsSection = () => {
                   <h4 className="text-sm font-semibold text-foreground mb-2">
                     Enrolled Courses
                   </h4>
+
                   <div className="space-y-1">
-                    {selectedStudent.courses.map((c) => (
-                      <div
-                        key={c}
-                        className="text-sm text-muted-foreground flex items-center gap-2"
-                      >
-                        <BookOpen className="w-3.5 h-3.5 text-primary" /> {c}
-                      </div>
-                    ))}
+                    {(showAllCourses ? courses : courses.slice(0, 5)).map(
+                      (c) => (
+                        <div
+                          key={c.title}
+                          className="text-sm text-muted-foreground flex items-center gap-2"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-primary" />
+                          {c.title}
+                        </div>
+                      ),
+                    )}
                   </div>
+
+                  {courses.length > 5 && (
+                    <button
+                      onClick={() => setShowAllCourses((prev) => !prev)}
+                      className="mt-2 text-xs text-primary hover:underline"
+                    >
+                      {showAllCourses ? "View less" : "View more"}
+                    </button>
+                  )}
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">
-                    Latest Instructor Feedback
-                  </h4>
-                  <blockquote className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3 leading-relaxed">
-                    "{selectedStudent.feedback}"
-                  </blockquote>
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-2">
-                    {selectedStudent.name}'s CV
+                    {selectedStudent.full_name ?? selectedStudent.username}'s CV
                   </h4>
 
-                  {selectedStudent.cvUrl ? (
+                  {selectedStudent.cv_url ? (
                     <a
-                      href={selectedStudent.cvUrl}
-                      download
+                      href={selectedStudent.cv_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                     >
-                      <BookOpen className="w-4 h-4" />
-                      Download CV
+                      <Eye className="w-4 h-4" />
+                      View CV
                     </a>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
@@ -179,6 +224,61 @@ const StudentsSection = () => {
                         {skill}
                       </span>
                     ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-2">
+                    Links
+                  </h4>
+
+                  <div className="space-y-3">
+                    {/* GitHub */}
+                    <div>
+                      <label className="text-xs text-muted-foreground">
+                        GitHub
+                      </label>
+                      <Input
+                        value={selectedStudent.github_url ?? "Not provided"}
+                        readOnly
+                        onClick={() =>
+                          selectedStudent.github_url &&
+                          window.open(selectedStudent.github_url, "_blank")
+                        }
+                        className="mt-1 cursor-pointer"
+                      />
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div>
+                      <label className="text-xs text-muted-foreground">
+                        LinkedIn
+                      </label>
+                      <Input
+                        value={selectedStudent.linkedin_url ?? "Not provided"}
+                        readOnly
+                        onClick={() =>
+                          selectedStudent.linkedin_url &&
+                          window.open(selectedStudent.linkedin_url, "_blank")
+                        }
+                        className="mt-1 cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Portfolio */}
+                    <div>
+                      <label className="text-xs text-muted-foreground">
+                        Portfolio
+                      </label>
+                      <Input
+                        value={selectedStudent.portfolio_url ?? "Not provided"}
+                        readOnly
+                        onClick={() =>
+                          selectedStudent.portfolio_url &&
+                          window.open(selectedStudent.portfolio_url, "_blank")
+                        }
+                        className="mt-1 cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

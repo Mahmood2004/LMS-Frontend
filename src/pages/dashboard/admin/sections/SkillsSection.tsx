@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { PRESET_SKILLS } from "../data/skills";
+import { skillsService } from "@/services/admin/skillsService";
 
 const SkillsSection = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [skills, setSkills] = useState<string[]>([...PRESET_SKILLS]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [pendingSkills, setPendingSkills] = useState<string[]>([]);
 
-  const handleAddSkill = () => {
+  const handleAddSkill = async () => {
     const trimmed = newSkill.trim();
     if (!trimmed) return;
 
@@ -19,27 +21,88 @@ const SkillsSection = () => {
       toast({
         title: "Skill already exists",
         variant: "destructive",
-        duration: 3000,
+        duration: 2000,
       });
       return;
     }
 
-    setSkills([...skills, trimmed]);
+    if (pendingSkills.includes(trimmed)) return;
+
+    setPendingSkills((prev) => [...prev, trimmed]);
+
+    setSkills((prev) => [...prev, trimmed]);
     setNewSkill("");
-    toast({
-      title: "Skill added",
-      duration: 3000,
-    });
+
+    try {
+      await skillsService.addSkills([trimmed]);
+
+      toast({
+        title: "Skill added",
+        duration: 2000,
+      });
+    } catch {
+      setSkills((prev) => prev.filter((s) => s !== trimmed));
+
+      toast({
+        title: "Error",
+        description: "Failed to add skill",
+        variant: "destructive",
+        duration: 2000,
+      });
+    } finally {
+      setPendingSkills((prev) => prev.filter((s) => s !== trimmed));
+    }
   };
 
-  const handleDeleteSkill = (skill: string) => {
-    setSkills(skills.filter((s) => s !== skill));
-    toast({
-      title: "Skill removed",
-      variant: "destructive",
-      duration: 3000,
-    });
+  const handleDeleteSkill = async (skill: string) => {
+    if (pendingSkills.includes(skill)) return;
+
+    setPendingSkills((prev) => [...prev, skill]);
+    setSkills((prev) => prev.filter((s) => s !== skill));
+
+    try {
+      await skillsService.deleteSkills([skill]);
+
+      toast({
+        title: "Skill removed",
+        duration: 2000,
+      });
+    } catch {
+      setSkills((prev) => [...prev, skill]);
+
+      toast({
+        title: "Error",
+        description: "Failed to delete skill",
+        variant: "destructive",
+        duration: 2000,
+      });
+    } finally {
+      setPendingSkills((prev) => prev.filter((s) => s !== skill));
+    }
   };
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      setLoading(true);
+      try {
+        const data = await skillsService.getAllSkills();
+
+        const skillNames = data.map((s: any) => s.name);
+        setSkills(skillNames);
+      } catch {
+        toast({
+          title: "Error",
+          description: "Failed to load skills",
+          variant: "destructive",
+          duration: 2000,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
 
   return (
     <>
@@ -67,27 +130,49 @@ const SkillsSection = () => {
             onChange={(e) => setNewSkill(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddSkill()}
           />
-          <Button onClick={handleAddSkill} variant="hero">
+          <Button onClick={handleAddSkill} variant="hero" disabled={loading}>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
 
         <div className="flex flex-wrap gap-2 mt-2">
-          {skills
-            .filter((skill) =>
-              skill.toLowerCase().includes(search.toLowerCase()),
-            )
-            .map((skill) => (
-              <div
-                key={skill}
-                className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm"
-              >
-                {skill}
-                <button onClick={() => handleDeleteSkill(skill)}>
-                  <X className="w-3 h-3 text-red-500" />
-                </button>
-              </div>
-            ))}
+          {loading && (
+            <p className="mt-8 text-center text-muted-foreground">
+              Loading skills...
+            </p>
+          )}
+
+          {!loading && skills.length === 0 && (
+            <p className="mt-8 text-center text-muted-foreground">
+              No skills found
+            </p>
+          )}
+          {!loading &&
+            skills
+              .filter((skill) =>
+                skill.toLowerCase().includes(search.toLowerCase()),
+              )
+              .map((skill) => (
+                <div
+                  key={skill}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm ${
+                    pendingSkills.includes(skill) ? "opacity-50" : ""
+                  }`}
+                >
+                  {skill}
+                  <button
+                    onClick={() => handleDeleteSkill(skill)}
+                    disabled={pendingSkills.includes(skill)}
+                    className={`ml-1 ${
+                      pendingSkills.includes(skill)
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-red-500"
+                    }`}
+                  >
+                    <X className="w-3 h-3 text-red-500" />
+                  </button>
+                </div>
+              ))}
         </div>
       </div>
     </>

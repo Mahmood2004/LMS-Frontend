@@ -8,20 +8,16 @@ import StudentsSection from "./sections/StudentsSection";
 import SkillsSection from "./sections/SkillsSection";
 
 const AdminDashboard = () => {
-  type AdminSection = "instructors" | "students" | "skills";
-
-  const params = useParams<{ section?: AdminSection }>();
+  const params = useParams<{
+    section?: "instructors" | "students" | "skills";
+  }>();
   const navigate = useRouterNavigate();
 
-  const validSections: AdminSection[] = ["instructors", "students", "skills"];
-  const initialSection: AdminSection = validSections.includes(
-    params.section as AdminSection,
-  )
-    ? (params.section as AdminSection)
+  const validSections = ["instructors", "students", "skills"];
+  const initialSection = validSections.includes(params.section ?? "")
+    ? (params.section as typeof activeSection)
     : "instructors";
-
-  const [activeSection, setActiveSection] =
-    useState<AdminSection>(initialSection);
+  const [activeSection, setActiveSection] = useState(initialSection);
 
   const handleNavigate = (section: "instructors" | "students" | "skills") => {
     setActiveSection(section);

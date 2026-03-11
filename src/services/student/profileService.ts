@@ -15,7 +15,7 @@ export interface StudentProfile {
 }
 
 export interface UpdateProfilePayload {
-  full_name?: string;
+  fullName?: string;
   bio?: string | null;
   linkedin_url?: string | null;
   github_url?: string | null;
@@ -51,13 +51,13 @@ export interface DeleteCVResponse {
   message: string;
 }
 
-const BASE = "/profile";
+const API_BASE = "/profile";
 
 // Service
 const studentProfileService = {
   // Get Student Profile
   getProfile: async (): Promise<StudentProfile> => {
-    const res = await api.get(`${BASE}/my-profile`);
+    const res = await api.get(`${API_BASE}/my-profile`);
     return res.data;
   },
 
@@ -65,7 +65,7 @@ const studentProfileService = {
   updateProfile: async (
     data: UpdateProfilePayload,
   ): Promise<UpdateProfileResponse> => {
-    const res = await api.patch(`${BASE}/update-profile`, data);
+    const res = await api.patch(`${API_BASE}/update-profile`, data);
     return res.data;
   },
 
@@ -74,7 +74,7 @@ const studentProfileService = {
     const formData = new FormData();
     formData.append("cv", file);
 
-    const res = await api.patch(`${BASE}/me/cv`, formData, {
+    const res = await api.patch(`${API_BASE}/me/cv`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -85,13 +85,13 @@ const studentProfileService = {
 
   // Get Signed CV URL
   getCVUrl: async (): Promise<CVUrlResponse> => {
-    const res = await api.get(`${BASE}/me/cv`);
+    const res = await api.get(`${API_BASE}/me/cv`);
     return res.data;
   },
 
   // Delete CV
   deleteCV: async (): Promise<DeleteCVResponse> => {
-    const res = await api.delete(`${BASE}/me/cv`);
+    const res = await api.delete(`${API_BASE}/me/cv`);
     return res.data;
   },
 };

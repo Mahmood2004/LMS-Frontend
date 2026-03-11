@@ -3,25 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { navItems } from "./data/mockData";
-import { notificationsData as initialNotifications } from "../student/data/mockData";
+import { studentNavItems } from "../shared/data/data";
 import { useAuth } from "@/context/AuthContext";
 
 interface StudentLayoutProps {
   activeSection: string;
   onNavigate: (section: string) => void;
   children: React.ReactNode;
-  notifications: typeof initialNotifications;
-  setNotifications: React.Dispatch<
-    React.SetStateAction<typeof initialNotifications>
-  >;
+  unreadCount: number;
 }
 
 const StudentLayout = ({
   activeSection,
   onNavigate,
   children,
-  notifications,
+  unreadCount,
 }: StudentLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logout } = useAuth();
@@ -48,7 +44,7 @@ const StudentLayout = ({
 
           {/* Desktop nav links */}
           <div className="hidden lg:flex items-center gap-1">
-            {navItems.slice(0, 3).map((item) => (
+            {studentNavItems.slice(0, 3).map((item) => (
               <button
                 key={item.id}
                 onClick={() => navigate(item.id)}
@@ -67,7 +63,7 @@ const StudentLayout = ({
           <div className="hidden lg:flex items-center gap-2 ml-auto">
             {/* Utility Icons */}
             <div className="flex items-center gap-1 mr-2 border-r border-border pr-2">
-              {navItems.slice(4, 6).map((item) => (
+              {studentNavItems.slice(4, 6).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => navigate(item.id)}
@@ -79,10 +75,9 @@ const StudentLayout = ({
                   title={item.label}
                 >
                   <item.icon className="w-5 h-5 shrink-0" />
-                  {item.id === "notifications" &&
-                    notifications.some((n) => !n.read) && (
-                      <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
-                    )}
+                  {item.id === "notifications" && unreadCount > 0 && (
+                    <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
                 </button>
               ))}
             </div>
@@ -153,7 +148,7 @@ const StudentLayout = ({
               </div>
               {/* Nav items */}
               <div className="p-4 space-y-1">
-                {navItems
+                {studentNavItems
                   .filter((item) => item.id !== "assistant")
                   .map((item) => (
                     <button
@@ -167,10 +162,9 @@ const StudentLayout = ({
                     >
                       <item.icon className="w-5 h-5 shrink-0" />
                       {item.label}
-                      {item.id === "notifications" &&
-                        notifications.some((n) => !n.read) && (
-                          <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-                        )}
+                      {item.id === "notifications" && unreadCount > 0 && (
+                        <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
+                      )}
                     </button>
                   ))}
                 <div className="pt-2 border-t border-border mt-2">

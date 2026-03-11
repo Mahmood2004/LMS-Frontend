@@ -5,6 +5,7 @@ import { botReplies } from "../data/mockData";
 import type { ChatSession, ChatMsg } from "../types/chat";
 import ChatSidebar from "../components/ChatSidebar";
 import DeleteChatModal from "../components/DeleteChatModal";
+import studentProfileService from "@/services/student/profileService";
 import {
   getChats,
   createChat,
@@ -13,26 +14,15 @@ import {
   deleteChat,
 } from "@/services/chatService";
 
-/* ── helpers ────────────────────────────────────────────────────── */
-
 function generateTitle(text: string): string {
   const words = text.split(/\s+/).slice(0, 6);
   const title = words.join(" ");
   return title.length < text.length ? title + "..." : title;
 }
 
-/* ── types ───────────────────────────────────────────────────────── */
-
-interface AssistantSectionProps {
-  studentName?: string;
-}
-
-/* ── component ──────────────────────────────────────────────────── */
-
-const AssistantSection = ({
-  studentName = "Student",
-}: AssistantSectionProps) => {
-  /* ── state ─────────────────────────────────────────────────────── */
+const AssistantSection = () => {
+  const [profile, setProfile] = useState<{ full_name?: string } | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -53,6 +43,22 @@ const AssistantSection = ({
 
   const activeChat = chats.find((c) => c.id === activeChatId) ?? null;
   const messages = activeChat?.messages ?? [];
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        setLoadingProfile(true);
+        const profileData = await studentProfileService.getProfile();
+        setProfile(profileData);
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfileData();
+  }, []);
 
   /* ── load chats on mount ──────────────────────────────────────── */
 
@@ -234,8 +240,6 @@ const AssistantSection = ({
     setActiveChatId(id);
   }, []);
 
-  /* ── render ─────────────────────────────────────────────────────── */
-
   return (
     <div className="flex w-full" style={{ height: "calc(100vh - 4rem)" }}>
       {/* Sidebar */}
@@ -276,7 +280,8 @@ const AssistantSection = ({
                     className="text-center"
                   >
                     <h2 className="text-3xl sm:text-4xl font-bold">
-                      Hello, {studentName}{" "}
+                      Hello,{" "}
+                      {loadingProfile ? "..." : profile?.full_name || "Student"}{" "}
                       <span className="inline-block animate-bounce">👋</span>
                     </h2>
                     <p className="mt-3 text-lg text-muted-foreground">
@@ -309,7 +314,8 @@ const AssistantSection = ({
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 mt-0.5">
                             <span className="text-xs font-bold text-white">
-                              {studentName.charAt(0).toUpperCase()}
+                              {profile?.full_name?.charAt(0).toUpperCase() ||
+                                "Student"}
                             </span>
                           </div>
                         )}

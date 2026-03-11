@@ -22,11 +22,7 @@ const authService = {
 
       localStorage.setItem("accessToken", accessToken);
 
-      Cookies.set("refreshToken", refreshToken, {
-        secure: true,
-        sameSite: "strict",
-        expires: 7,
-      });
+      Cookies.set("refreshToken", refreshToken);
 
       return response.data;
     } catch (err: any) {

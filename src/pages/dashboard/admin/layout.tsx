@@ -1,7 +1,7 @@
 import { Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { sidebarItems } from "./data/mockData";
+import { adminSidebarItems } from "../shared/data/data";
 import { useAuth } from "@/context/AuthContext";
 
 interface AdminLayoutProps {
@@ -39,7 +39,7 @@ const AdminLayout = ({
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1">
-          {sidebarItems.map((item) => (
+          {adminSidebarItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
