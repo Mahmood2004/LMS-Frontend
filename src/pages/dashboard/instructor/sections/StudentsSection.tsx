@@ -8,6 +8,7 @@ import InstructorCourseServices, {
   InstructorStudent,
   CourseTitle,
 } from "@/services/instructor/courseService";
+// import studentService from "@/services/admin/studentService";
 
 const StudentsSection = () => {
   const [search, setSearch] = useState("");
@@ -35,6 +36,22 @@ const StudentsSection = () => {
 
     fetchStudents();
   }, []);
+
+  // const handleViewCV = async () => {
+  //   if (!selectedStudent?.id) return;
+
+  //   try {
+  //     const cvUrl = await studentService.getStudentCV(selectedStudent.id);
+
+  //     if (cvUrl) {
+  //       window.open(cvUrl, "_blank", "noopener,noreferrer");
+  //     } else {
+  //       console.error("CV URL not found");
+  //     }
+  //   } catch (err) {
+  //     console.error("Failed to fetch CV:", err);
+  //   }
+  // };
 
   const filteredStudents = students
     .filter((s) =>
@@ -190,27 +207,25 @@ const StudentsSection = () => {
                     </button>
                   )}
                 </div>
-                <div>
+                {/* <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">
-                    {selectedStudent.full_name ?? selectedStudent.username}'s CV
+                    CV
                   </h4>
 
                   {selectedStudent.cv_url ? (
-                    <a
-                      href={selectedStudent.cv_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={handleViewCV}
                       className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
                     >
                       <Eye className="w-4 h-4" />
                       View CV
-                    </a>
+                    </button>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">
                       No CV uploaded.
                     </p>
                   )}
-                </div>
+                </div> */}
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-2">
                     Skills

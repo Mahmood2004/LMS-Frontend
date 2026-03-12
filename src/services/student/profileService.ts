@@ -3,6 +3,7 @@ import api from "@/lib/api";
 // Types
 
 export interface StudentProfile {
+  id: string;
   email: string;
   username: string;
   full_name: string;

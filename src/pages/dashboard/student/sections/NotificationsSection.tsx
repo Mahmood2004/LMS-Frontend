@@ -70,7 +70,7 @@ const NotificationsSection = () => {
   const filtered =
     filter === "all"
       ? notifications
-      : notifications.filter((n) => n.reference_type === filter);
+      : notifications.filter((n) => n.type === filter);
 
   return (
     <>
@@ -136,11 +136,11 @@ const NotificationsSection = () => {
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className={`p-4 rounded-xl bg-card border border-border shadow-card border-l-4 ${typeColor[n.reference_type]} flex items-start gap-3 sm:gap-4 cursor-pointer hover:shadow-elevated transition-shadow`}
+                className={`p-4 rounded-xl bg-card border border-border shadow-card border-l-4 ${typeColor[n.type]} flex items-start gap-3 sm:gap-4 cursor-pointer hover:shadow-elevated transition-shadow`}
                 onClick={() => markAsRead(n)}
               >
                 <div className="mt-0.5 shrink-0">
-                  {typeIcon[n.reference_type]}
+                  {typeIcon[n.type]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

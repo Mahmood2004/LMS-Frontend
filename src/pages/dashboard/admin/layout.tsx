@@ -25,7 +25,7 @@ const AdminLayout = ({
             <Shield className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display font-bold text-foreground">
-            EduRecruit<span className="text-primary">AI</span>
+            DigitalHub<span className="text-primary">LMS</span>
           </span>
         </Link>
 

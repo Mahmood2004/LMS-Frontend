@@ -20,11 +20,11 @@ const Index = () => {
               <Brain className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-display font-semibold text-foreground">
-              EduRecruit<span className="text-primary">AI</span>
+              DigitalHub<span className="text-primary">LMS</span>
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2026 EduRecruitAI. All rights reserved.
+            © 2026 DigitalHubLMS. All rights reserved.
           </p>
         </div>
       </footer>

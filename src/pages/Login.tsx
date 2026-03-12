@@ -25,12 +25,14 @@ const Login = () => {
       toast({
         title: "Welcome back!",
         description: "You've been signed in successfully.",
+        duration: 2000,
       });
     } catch (err: any) {
       toast({
         title: "Login failed",
         description: err.message || "Please check your credentials.",
         variant: "destructive",
+        duration: 2000,
       });
     } finally {
       setIsLoading(false);
@@ -48,7 +50,7 @@ const Login = () => {
               <Brain className="w-7 h-7 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-2xl text-primary-foreground">
-              EduRecruitAI
+              DigitalHubLMS
             </span>
           </div>
           <h2 className="text-3xl font-bold font-display text-primary-foreground leading-tight">
@@ -84,7 +86,7 @@ const Login = () => {
               <Brain className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-lg text-foreground">
-              EduRecruit<span className="text-primary">AI</span>
+              DigitalHub<span className="text-primary">LMS</span>
             </span>
           </div>
 
@@ -131,22 +133,6 @@ const Login = () => {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 rounded-lg bg-accent/50 border border-border">
-            <p className="text-xs font-semibold text-foreground mb-2">
-              🔑 Test Credentials:
-            </p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>
-                <span className="font-medium text-foreground">Instructor:</span>{" "}
-                instructor / pass123
-              </p>
-              <p>
-                <span className="font-medium text-foreground">Student:</span>{" "}
-                student / pass123
-              </p>
-            </div>
-          </div>
 
           <p className="mt-4 text-xs text-center text-muted-foreground">
             No public registration. Accounts are provisioned by your

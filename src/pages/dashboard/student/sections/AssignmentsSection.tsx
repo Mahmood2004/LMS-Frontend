@@ -29,7 +29,7 @@ const AssignmentsSection = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>("0");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
-  const [submitting, setSubmitting] = useState<String | null>(null);
+  const [submitting, setSubmitting] = useState<string | null>(null);
   const [submittedIds, setSubmittedIds] = useState<string[]>([]);
   const [submissionUrls, setSubmissionUrls] = useState<Record<string, string>>(
     {},

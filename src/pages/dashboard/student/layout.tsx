@@ -38,7 +38,7 @@ const StudentLayout = ({
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-foreground text-sm sm:text-base">
-              EduRecruit<span className="text-primary">AI</span>
+              DigitalHub<span className="text-primary">LMS</span>
             </span>
           </Link>
 
@@ -136,7 +136,7 @@ const StudentLayout = ({
                     <Sparkles className="w-4 h-4 text-primary-foreground" />
                   </div>
                   <span className="font-display font-bold text-foreground">
-                    EduRecruit<span className="text-primary">AI</span>
+                    DigitalHub<span className="text-primary">LMS</span>
                   </span>
                 </Link>
                 <button
