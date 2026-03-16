@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import remarkGfm from "remark-gfm";
-import ReactMarkdown, { Components } from "react-markdown";
 import {
   Send,
   Sparkles,
@@ -19,80 +15,7 @@ import AssistantService, {
   SessionItem,
   MessageItem,
 } from "@/services/student/assistantService";
-
-interface ChatBubbleProps {
-  content: string;
-  role: "user" | "assistant";
-}
-
-function ChatBubble({ content, role }: ChatBubbleProps) {
-  return (
-    <div
-      className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed break-words ${
-        role === "user"
-          ? "bg-blue-400 text-white rounded-tr-md ml-auto"
-          : "bg-gray-600 text-white rounded-tl-md mr-auto"
-      }`}
-    >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          code({ node, inline, className, children, ...props }) {
-            if (inline) {
-              // Inline code stays simple
-              return (
-                <code
-                  className="bg-gray-600 px-1 py-0.5 rounded text-sm font-mono"
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            } else {
-              // Multi-line code block with syntax highlighting
-              return (
-                <SyntaxHighlighter
-                  style={oneDark}
-                  language={className?.replace("language-", "") || "text"}
-                  PreTag="div"
-                  {...props}
-                  customStyle={{ borderRadius: "0.5rem", padding: "1rem" }}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
-              );
-            }
-          },
-          table({ children }) {
-            return (
-              <div className="overflow-x-auto my-2">
-                <table className="table-auto border-collapse border border-gray-500 w-full text-sm">
-                  {children}
-                </table>
-              </div>
-            );
-          },
-          th({ children }) {
-            return (
-              <th className="border border-gray-400 px-2 py-1 bg-gray-600 text-left">
-                {children}
-              </th>
-            );
-          },
-          td({ children }) {
-            return (
-              <td className="border border-gray-400 px-2 py-1 text-left">
-                {children}
-              </td>
-            );
-          },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-}
+import ChatBubble from "../../shared/components/ChatBubble";
 
 const AssistantSection = () => {
   const [profile, setProfile] = useState<StudentProfile>(null);
@@ -135,7 +58,6 @@ const AssistantSection = () => {
         const sessionsData = await AssistantService.getSessions(userId);
 
         setSessions(sessionsData);
-        console.log("sessions", sessionsData);
 
         if (sessionsData.length > 0) {
           setActiveSessionId(sessionsData[0]);
@@ -161,7 +83,6 @@ const AssistantSection = () => {
         userId,
         activeSessionId,
       );
-
       setMessages(msgs);
     };
 
@@ -426,7 +347,6 @@ const AssistantSection = () => {
                             </span>
                           </div>
                         )}
-
                         {/* Chat bubble */}
                         <ChatBubble content={msg.content} role={msg.role} />
                       </motion.div>
