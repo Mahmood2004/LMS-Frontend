@@ -243,6 +243,14 @@ const AssignmentsSection = () => {
           const effectiveStatus: AssignmentStatus = isLocallySubmitted
             ? "submitted"
             : backendStatus;
+
+          const displayStatus =
+            effectiveStatus === "graded"
+              ? "graded"
+              : isPastDue
+                ? "Deadline Passed"
+                : effectiveStatus;
+
           return (
             <motion.div
               key={a.id}
@@ -266,9 +274,8 @@ const AssignmentsSection = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <StatusBadge
-                    status={isPastDue ? "Deadline Passed" : effectiveStatus}
-                  />
+                  <StatusBadge status={displayStatus} />
+
                   {effectiveStatus !== "graded" && (
                     <Button
                       size="sm"
